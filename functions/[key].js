@@ -212,7 +212,7 @@ const adminHtmlTemplate = `<!doctype html>
     async function createShortUrl(event) {
       event.preventDefault();
       const url = els.longURL.value.trim();
-      const key = els.keyPhrase.value.trim().replace(/\s/g, "-");
+      const key = els.keyPhrase.value.trim();
       if (!url) return setResult("长链接不能为空");
 
       els.addBtn.disabled = true;
