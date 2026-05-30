@@ -4,9 +4,9 @@
 
 ## 项目结构
 
-- `pages/`：静态管理页，CSS 和 JS 已内联
+- `pages/`：静态 404 页面
 - `functions/api.js`：Pages Functions API，负责新增、删除、查询短链
-- `functions/[key].js`：Pages Functions 跳转逻辑，负责 `/:key` 短链跳转
+- `functions/[key].js`：Pages Functions 跳转逻辑，负责 `/:key` 短链跳转；当路径等于管理密码时返回管理页
 
 ## 部署
 
@@ -26,10 +26,10 @@
 - 推荐：在 Pages 环境变量里设置 `USW_PASSWORD`
 - 兼容旧方案：在 KV 里设置 key 为 `password` 的记录
 
-部署完成后，直接访问 Pages 域名即可使用管理页，例如：
+部署完成后，直接访问 Pages 根域名会返回 404。只有访问密码路径才会显示管理页，例如：
 
 ```text
-https://your-project.pages.dev
+https://your-project.pages.dev/your-password
 ```
 
 短链格式为：
