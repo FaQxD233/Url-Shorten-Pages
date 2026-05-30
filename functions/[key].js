@@ -3,34 +3,36 @@ const config = {
 }
 
 const protect_keylist = ["api", "password"]
-const keyPattern = /^[A-Za-z0-9_-]{1,64}$/
+
+const html404 = `<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>404 Not Found</title></head>
+<body><h1>404 Not Found.</h1><p>The url you visit is not found.</p></body>
+</html>`
 
 const adminHtmlTemplate = `<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Url Shorten Worker</title>
+  <title>Url Shorten Pages</title>
   <style>
     :root {
       color-scheme: light dark;
-      --bg: #edf1f7;
-      --panel: #ffffff;
-      --text: #162033;
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #172033;
       --muted: #64748b;
-      --line: #d8e0ec;
+      --line: #d7deea;
       --primary: #2563eb;
-      --primary-hover: #1d4ed8;
       --danger: #dc2626;
-      --danger-hover: #b91c1c;
       --soft: #f8fafc;
-      --ok: #15803d;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #0f172a;
-        --panel: #172033;
+        --card: #172033;
         --text: #e2e8f0;
         --muted: #94a3b8;
         --line: #2b3850;
@@ -38,235 +40,85 @@ const adminHtmlTemplate = `<!doctype html>
       }
     }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(37, 99, 235, .18), transparent 30rem),
-        linear-gradient(135deg, var(--bg), var(--soft));
-    }
-    main {
-      width: min(1120px, calc(100vw - 32px));
-      margin: 0 auto;
-      padding: 32px 0;
-    }
-    header {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    h1, h2 { margin: 0; }
-    h1 { font-size: clamp(28px, 5vw, 48px); letter-spacing: -0.04em; }
-    h2 { font-size: 18px; }
-    p { color: var(--muted); line-height: 1.6; }
-    .grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-      gap: 20px;
-    }
-    .card {
-      padding: 20px;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: color-mix(in srgb, var(--panel) 92%, transparent);
-      box-shadow: 0 18px 50px rgba(15, 23, 42, .12);
-      backdrop-filter: blur(8px);
-    }
-    .stack { display: grid; gap: 14px; }
-    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    label { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
-    input, textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 11px 12px;
-      color: var(--text);
-      background: var(--soft);
-      font: inherit;
-    }
-    textarea { min-height: 112px; resize: vertical; }
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 10px 14px;
-      color: #fff;
-      background: var(--primary);
-      font: inherit;
-      font-weight: 650;
-      cursor: pointer;
-    }
-    button:hover { background: var(--primary-hover); }
+    body { margin: 0; color: var(--text); background: var(--bg); }
+    main { width: min(980px, calc(100vw - 28px)); margin: 0 auto; padding: 28px 0; }
+    h1 { margin: 0 0 18px; font-size: 32px; }
+    h2 { margin: 0 0 14px; font-size: 18px; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: 18px; align-items: start; }
+    .card { border: 1px solid var(--line); border-radius: 16px; padding: 18px; background: var(--card); box-shadow: 0 12px 32px rgba(15, 23, 42, .08); }
+    .stack { display: grid; gap: 12px; }
+    label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+    input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; color: var(--text); background: var(--soft); font: inherit; }
+    textarea { min-height: 108px; resize: vertical; }
+    button { border: 0; border-radius: 10px; padding: 10px 12px; color: #fff; background: var(--primary); font: inherit; font-weight: 650; cursor: pointer; }
     button.secondary { color: var(--text); background: var(--line); }
-    button.secondary:hover { filter: brightness(.96); }
     button.danger { background: var(--danger); }
-    button.danger:hover { background: var(--danger-hover); }
-    button:disabled { opacity: .55; cursor: not-allowed; }
-    .status {
-      min-height: 44px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 11px 12px;
-      background: var(--soft);
-      color: var(--muted);
-      overflow-wrap: anywhere;
-    }
-    .status.ok { color: var(--ok); }
-    .status.err { color: var(--danger); }
-    .item {
-      display: grid;
-      gap: 10px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: var(--soft);
-    }
-    .item strong, code { overflow-wrap: anywhere; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .status { min-height: 42px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); color: var(--muted); overflow-wrap: anywhere; }
+    .item { display: grid; gap: 9px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); }
+    .item a, .item code { overflow-wrap: anywhere; }
     .item code { color: var(--muted); }
-    .list { display: grid; gap: 12px; }
-    .small { font-size: 13px; color: var(--muted); }
-    @media (max-width: 860px) {
-      header { align-items: flex-start; flex-direction: column; }
-      .grid { grid-template-columns: 1fr; }
-    }
+    .list { display: grid; gap: 10px; }
+    .empty { color: var(--muted); }
+    @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <main>
-    <header>
-      <div>
-        <h1>Url Shorten Worker</h1>
-        <p>Cloudflare Pages 短链管理页。前端、API、跳转都在同一个 Pages 项目内。</p>
-      </div>
-      <button class="secondary" id="copyApiBtn" type="button">复制 API 地址</button>
-    </header>
-
+    <h1>Url Shorten Pages</h1>
     <section class="grid">
-      <div class="stack">
-        <form class="card stack" id="shortenForm">
-          <h2>创建短链</h2>
-          <label>
-            长链接
-            <textarea id="longURL" placeholder="https://example.com/" required></textarea>
-          </label>
-          <label>
-            自定义短链 Key，可留空
-            <input id="keyPhrase" type="text" maxlength="64" pattern="[A-Za-z0-9_-]{1,64}" placeholder="my-link">
-          </label>
-          <div class="row">
-            <button id="addBtn" type="submit">创建</button>
-            <button class="secondary" id="clearFormBtn" type="button">清空</button>
-          </div>
-        </form>
+      <form class="card stack" id="shortenForm">
+        <h2>创建 / 覆盖本地记录</h2>
+        <label>
+          长链接
+          <textarea id="longURL" placeholder="https://example.com/" required></textarea>
+        </label>
+        <label>
+          短链接 Key，可留空自动生成
+          <input id="keyPhrase" type="text" maxlength="64" placeholder="my-link">
+        </label>
+        <div class="row">
+          <button id="addBtn" type="submit">创建短链</button>
+          <button class="secondary" id="loadKVBtn" type="button">load localStorage from KV</button>
+          <button class="secondary" id="loadLocalBtn" type="button">load localStorage</button>
+          <button class="danger" id="clearLocalBtn" type="button">clear localStorage</button>
+        </div>
+      </form>
 
-        <section class="card stack">
-          <h2>查询</h2>
-          <label>
-            Key
-            <input id="queryKey" type="text" maxlength="64" pattern="[A-Za-z0-9_-]{1,64}" placeholder="输入短链 key">
-          </label>
-          <div class="row">
-            <button id="queryBtn" type="button">查询</button>
-            <button class="secondary" id="loadAllBtn" type="button">从 KV 加载全部</button>
-          </div>
-        </section>
-      </div>
-
-      <aside class="stack">
-        <section class="card stack">
-          <h2>连接设置</h2>
-          <label>
-            API 地址
-            <input id="apiBase" type="text" placeholder="/api">
-          </label>
-          <label>
-            API 密码
-            <input id="passwordText" type="password" placeholder="管理密码">
-          </label>
-          <p class="small">部署为单 Cloudflare Pages 项目时保持 /api 即可。密码来自 Pages 环境变量 USW_PASSWORD，或 KV 中的 password。</p>
-        </section>
-
-        <section class="card stack">
-          <h2>结果</h2>
-          <div class="status" id="result">等待操作</div>
-        </section>
-      </aside>
+      <section class="card stack">
+        <h2>结果</h2>
+        <div class="status" id="result">等待操作</div>
+      </section>
     </section>
 
-    <section class="card stack" style="margin-top: 20px;">
-      <div class="row" style="justify-content: space-between;">
-        <h2>本地记录</h2>
-        <div class="row">
-          <button class="secondary" id="reloadLocalBtn" type="button">刷新本地</button>
-          <button class="danger" id="clearLocalBtn" type="button">清空本地</button>
-        </div>
-      </div>
+    <section class="card stack" style="margin-top: 18px;">
+      <h2>短链列表</h2>
       <div class="list" id="urlList"></div>
     </section>
   </main>
 
   <script>
-    const injectedApiBase = "__API_BASE__";
-    const injectedPassword = "__PASSWORD__";
+    const apiBase = "__API_BASE__";
+    const password = "__PASSWORD__";
+    const storagePrefix = "usw:item:";
 
     const els = {
-      apiBase: document.querySelector("#apiBase"),
-      passwordText: document.querySelector("#passwordText"),
+      form: document.querySelector("#shortenForm"),
       longURL: document.querySelector("#longURL"),
       keyPhrase: document.querySelector("#keyPhrase"),
-      queryKey: document.querySelector("#queryKey"),
+      addBtn: document.querySelector("#addBtn"),
+      loadKVBtn: document.querySelector("#loadKVBtn"),
+      loadLocalBtn: document.querySelector("#loadLocalBtn"),
+      clearLocalBtn: document.querySelector("#clearLocalBtn"),
       result: document.querySelector("#result"),
       urlList: document.querySelector("#urlList"),
-      addBtn: document.querySelector("#addBtn"),
     };
 
-    function initialValue(value) {
-      return value && !value.startsWith("__") ? value : "";
-    }
-
-    function normalizeApiBase(value) {
-      return value.trim().replace(/\/$/, "");
-    }
-
-    function getApiBase() {
-      return normalizeApiBase(els.apiBase.value);
-    }
-
-    function getPassword() {
-      return els.passwordText.value;
-    }
-
-    function validateKey(key) {
-      if (!key) return "";
-      if (!/^[A-Za-z0-9_-]{1,64}$/.test(key)) return "Key 只允许 1-64 位字母、数字、下划线和连字符";
-      if (["api", "password"].includes(key)) return "api 和 password 是保留 key";
-      return "";
-    }
-
-    function saveSettings() {
-      localStorage.setItem("usw:apiBase", getApiBase());
-      localStorage.setItem("usw:password", getPassword());
-    }
-
-    function setStatus(text, type) {
+    function setResult(text) {
       els.result.textContent = text;
-      els.result.className = "status" + (type ? " " + type : "");
-    }
-
-    async function copyText(text) {
-      await navigator.clipboard.writeText(text);
-      setStatus("已复制: " + text, "ok");
     }
 
     async function apiRequest(payload) {
-      const apiBase = getApiBase();
-      const password = getPassword();
-      if (!apiBase) throw new Error("请先填写 API 地址");
-      if (!password) throw new Error("请先填写 API 密码");
-      saveSettings();
-
       const response = await fetch(apiBase, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -278,49 +130,36 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     function shortUrlFor(key) {
-      const apiBase = getApiBase();
-      let base = window.location.origin;
-      if (apiBase) {
-        try {
-          base = new URL(apiBase, window.location.origin).origin;
-        } catch (error) {
-          base = window.location.origin;
-        }
-      }
-      return base + "/" + encodeURIComponent(key);
+      return window.location.origin + "/" + encodeURIComponent(key);
     }
 
-    function storageKey(key) {
-      return "usw:item:" + key;
+    function saveLocal(key, value) {
+      localStorage.setItem(storagePrefix + key, value);
     }
 
-    function saveItem(key, value) {
-      localStorage.setItem(storageKey(key), value);
+    function removeLocal(key) {
+      localStorage.removeItem(storagePrefix + key);
     }
 
-    function removeItem(key) {
-      localStorage.removeItem(storageKey(key));
-    }
-
-    function loadItems() {
+    function localItems() {
       const items = [];
       for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("usw:item:")) {
-          items.push({ key: key.slice("usw:item:".length), value: localStorage.getItem(key) });
+        const name = localStorage.key(i);
+        if (name && name.startsWith(storagePrefix)) {
+          items.push({ key: name.slice(storagePrefix.length), value: localStorage.getItem(name) });
         }
       }
       items.sort((a, b) => a.key.localeCompare(b.key));
       return items;
     }
 
-    function renderList() {
-      const items = loadItems();
+    function renderLocal() {
+      const items = localItems();
       els.urlList.textContent = "";
       if (!items.length) {
         const empty = document.createElement("p");
-        empty.className = "small";
-        empty.textContent = "暂无本地记录。";
+        empty.className = "empty";
+        empty.textContent = "localStorage 里暂无记录。";
         els.urlList.append(empty);
         return;
       }
@@ -329,33 +168,43 @@ const adminHtmlTemplate = `<!doctype html>
         const node = document.createElement("div");
         node.className = "item";
 
-        const title = document.createElement("strong");
-        title.textContent = shortUrlFor(item.key);
+        const link = document.createElement("a");
+        link.href = shortUrlFor(item.key);
+        link.textContent = shortUrlFor(item.key);
+        link.target = "_blank";
+
         const value = document.createElement("code");
         value.textContent = item.value;
 
         const actions = document.createElement("div");
         actions.className = "row";
 
+        const fillBtn = document.createElement("button");
+        fillBtn.type = "button";
+        fillBtn.className = "secondary";
+        fillBtn.textContent = "填入表单";
+        fillBtn.addEventListener("click", () => {
+          els.keyPhrase.value = item.key;
+          els.longURL.value = item.value;
+        });
+
         const copyBtn = document.createElement("button");
         copyBtn.type = "button";
+        copyBtn.className = "secondary";
         copyBtn.textContent = "复制短链";
-        copyBtn.addEventListener("click", () => copyText(shortUrlFor(item.key)));
-
-        const queryBtn = document.createElement("button");
-        queryBtn.type = "button";
-        queryBtn.className = "secondary";
-        queryBtn.textContent = "查询";
-        queryBtn.addEventListener("click", () => queryKey(item.key));
+        copyBtn.addEventListener("click", async () => {
+          await navigator.clipboard.writeText(shortUrlFor(item.key));
+          setResult("已复制: " + shortUrlFor(item.key));
+        });
 
         const delBtn = document.createElement("button");
         delBtn.type = "button";
         delBtn.className = "danger";
-        delBtn.textContent = "删除";
-        delBtn.addEventListener("click", () => deleteKey(item.key));
+        delBtn.textContent = "删除 KV 记录";
+        delBtn.addEventListener("click", () => deleteRecord(item.key));
 
-        actions.append(copyBtn, queryBtn, delBtn);
-        node.append(title, value, actions);
+        actions.append(fillBtn, copyBtn, delBtn);
+        node.append(link, value, actions);
         els.urlList.append(node);
       }
     }
@@ -364,86 +213,60 @@ const adminHtmlTemplate = `<!doctype html>
       event.preventDefault();
       const url = els.longURL.value.trim();
       const key = els.keyPhrase.value.trim().replace(/\s/g, "-");
-      if (!url) return setStatus("长链接不能为空", "err");
-      const keyError = validateKey(key);
-      if (keyError) return setStatus(keyError, "err");
+      if (!url) return setResult("长链接不能为空");
 
       els.addBtn.disabled = true;
       try {
         const data = await apiRequest({ cmd: "add", url, key });
-        saveItem(data.key, url);
-        renderList();
-        setStatus("创建成功: " + shortUrlFor(data.key), "ok");
+        saveLocal(data.key, url);
+        renderLocal();
+        setResult("创建成功: " + shortUrlFor(data.key));
       } catch (error) {
-        setStatus(error.message, "err");
+        setResult(error.message);
       } finally {
         els.addBtn.disabled = false;
       }
     }
 
-    async function queryKey(key) {
-      try {
-        const data = await apiRequest({ cmd: "qry", key });
-        saveItem(data.key, data.url);
-        els.longURL.value = data.url;
-        els.keyPhrase.value = data.key;
-        renderList();
-        setStatus("查询成功: " + data.url, "ok");
-      } catch (error) {
-        setStatus(error.message, "err");
-      }
-    }
-
-    async function deleteKey(key) {
-      if (!confirm("确定删除 " + key + " ?")) return;
-      try {
-        await apiRequest({ cmd: "del", key });
-        removeItem(key);
-        renderList();
-        setStatus("删除成功: " + key, "ok");
-      } catch (error) {
-        setStatus(error.message, "err");
-      }
-    }
-
-    async function loadAll() {
+    async function loadKV() {
       try {
         const data = await apiRequest({ cmd: "qryall" });
-        for (const item of data.kvlist) saveItem(item.key, item.value);
-        renderList();
-        setStatus("已从 KV 加载 " + data.kvlist.length + " 条记录", "ok");
+        localStorage.clear();
+        for (const item of data.kvlist) {
+          saveLocal(item.key, item.value);
+        }
+        renderLocal();
+        setResult("已从 KV 加载 " + data.kvlist.length + " 条记录到 localStorage");
       } catch (error) {
-        setStatus(error.message, "err");
+        setResult(error.message);
       }
     }
 
-    function init() {
-      els.apiBase.value = initialValue(injectedApiBase) || localStorage.getItem("usw:apiBase") || "/api";
-      els.passwordText.value = initialValue(injectedPassword) || localStorage.getItem("usw:password") || "";
-      document.querySelector("#shortenForm").addEventListener("submit", createShortUrl);
-      document.querySelector("#clearFormBtn").addEventListener("click", () => {
-        els.longURL.value = "";
-        els.keyPhrase.value = "";
-      });
-      document.querySelector("#queryBtn").addEventListener("click", () => {
-        const key = els.queryKey.value.trim();
-        if (!key) return setStatus("Key 不能为空", "err");
-        if (key) queryKey(key);
-      });
-      document.querySelector("#loadAllBtn").addEventListener("click", loadAll);
-      document.querySelector("#reloadLocalBtn").addEventListener("click", renderList);
-      document.querySelector("#clearLocalBtn").addEventListener("click", () => {
-        for (const item of loadItems()) removeItem(item.key);
-        renderList();
-        setStatus("本地记录已清空", "ok");
-      });
-      document.querySelector("#copyApiBtn").addEventListener("click", () => copyText(new URL(getApiBase(), window.location.origin).href));
-      els.apiBase.addEventListener("change", saveSettings);
-      els.passwordText.addEventListener("change", saveSettings);
-      renderList();
+    async function deleteRecord(key) {
+      if (!confirm("确定删除 KV 记录 " + key + " ?")) return;
+      try {
+        await apiRequest({ cmd: "del", key });
+        removeLocal(key);
+        renderLocal();
+        setResult("已删除: " + key);
+      } catch (error) {
+        setResult(error.message);
+      }
     }
 
-    init();
+    els.form.addEventListener("submit", createShortUrl);
+    els.loadKVBtn.addEventListener("click", loadKV);
+    els.loadLocalBtn.addEventListener("click", () => {
+      renderLocal();
+      setResult("已加载 localStorage");
+    });
+    els.clearLocalBtn.addEventListener("click", () => {
+      localStorage.clear();
+      renderLocal();
+      setResult("已清空 localStorage");
+    });
+
+    renderLocal();
   </script>
 </body>
 </html>`
@@ -455,8 +278,7 @@ async function systemPassword(env) {
   return (await env.LINKS.get("password")) || ""
 }
 
-export async function onRequestGet(context) {
-  const { request, env, params } = context
+export async function onRequestGet({ request, env, params }) {
   const key = decodeURIComponent(params.key || "")
 
   if (!env.LINKS) {
@@ -475,8 +297,8 @@ export async function onRequestGet(context) {
     })
   }
 
-  if (!keyPattern.test(key) || protect_keylist.includes(key)) {
-    return new Response(`<!doctype html><html><head><meta charset="utf-8"><title>404 Not Found</title></head><body><h1>404 Not Found.</h1><p>The url you visit is not found.</p></body></html>`, {
+  if (protect_keylist.includes(key)) {
+    return new Response(html404, {
       status: 404,
       headers: { "Content-Type": "text/html; charset=UTF-8" },
     })
@@ -484,7 +306,7 @@ export async function onRequestGet(context) {
 
   let value = await env.LINKS.get(key)
   if (!value) {
-    return new Response(`<!doctype html><html><head><meta charset="utf-8"><title>404 Not Found</title></head><body><h1>404 Not Found.</h1><p>The url you visit is not found.</p></body></html>`, {
+    return new Response(html404, {
       status: 404,
       headers: { "Content-Type": "text/html; charset=UTF-8" },
     })
