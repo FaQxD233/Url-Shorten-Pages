@@ -1,49 +1,46 @@
-
-
 # API documentation
 
-Short links can be generated in a programmable way by calling the API interface
+This project uses Cloudflare Pages Functions. The API endpoint is:
 
-### API call address
+```text
+https://your-project.pages.dev/api
+```
 
-Self-deployed CloudFlare Worker address, for example: https://url.dem0.workers.dev or a self-bound domain name
+Request method: `POST`
 
-### Calling method: HTTP POST Request format: JSON
-Example:
-````
+Request body: JSON
+
+```json
 {
   "cmd": "add",
   "url": "https://example.com",
   "key": "ilikeu",
-  "password": "bodongshouqulveweifengci"
+  "password": "your-password"
 }
-````
-
-### Request parameters:
-```
-cmd: add | del | qry
-url: The long link
-key: The short link
-password: Authentication
 ```
 
-### Example response (JSON):
+Parameters:
 
-````
+- `cmd`: `add`, `del`, `qry`, or `qryall`
+- `url`: long URL, required for `add`
+- `key`: short key, required for `del` and `qry`, optional for `add`
+- `password`: management password
+
+Key rules:
+
+- 1-64 characters
+- Allowed characters: `A-Z`, `a-z`, `0-9`, `_`, `-`
+- Reserved keys: `api`, `password`
+
+Example response:
+
+```json
 {
   "status": 200,
   "error": "",
   "key": "HcAx62",
   "url": ""
 }
-````
+```
 
-### Response parameters:
-````
-"status": 200 | 500
-"error": error details
-"key": The short link
-"url": The long link
-````
-
-"status": 200 means success, other code means failed.
+Data is stored in the KV namespace bound as `LINKS`.

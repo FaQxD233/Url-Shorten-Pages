@@ -1,67 +1,60 @@
-# 演示
-短链系统 https://1way.eu.org/bodongshouqulveweifengci
+# Url Shorten Worker for Cloudflare Pages
 
-网络记事本 Pastebin https://pastebin.icdyct.cloudns.asia/tieludasiliqiuweiyue
+这是一个 Cloudflare Pages 一体化短链项目。静态管理页、API、短链跳转都由同一个 Pages 项目提供，不需要再单独部署 Cloudflare Worker，也不依赖 GitHub Pages、jsDelivr、Bootstrap 或 jQuery。
 
-图床 Image Hosting https://imghost.crazypeace.workers.dev/imghostimghost
+## 项目结构
 
-网络日记本 NetJournal 支持Markdown https://journal.crazypeace.workers.dev/journaljournal
+- `pages/`：静态管理页，CSS 和 JS 已内联
+- `functions/api.js`：Pages Functions API，负责新增、删除、查询短链
+- `functions/[key].js`：Pages Functions 跳转逻辑，负责 `/:key` 短链跳转
 
-# 完整的部署教程
-https://zelikk.blogspot.com/2022/07/url-shorten-worker-hide-tutorial.html
+## 部署
 
-## 如果不想被作者的更新影响
-- Fork一份自己的Repo.
-  
-- 在Cloudflare的worker.js中搜索`"https://crazypeace.github.io/Url-Shorten-Worker/" + config.theme + "/index.html"`, 把其中的`crazypeace`改为你自己的, 这样Cloudflare的worker就会拉你自己的这一份index.html
-  ![image](https://github.com/crazypeace/Url-Shorten-Worker/assets/665889/c98ca134-2809-4490-b9f7-ac27ba735e2e)
+在 Cloudflare Pages 绑定本仓库时使用以下配置：
 
-- 在你自己fork出来的这份Repo里, 修改index.html, 搜索`"https://crazypeace.github.io/Url-Shorten-Worker/main.js"`, 把其中的`crazypeace`改为你自己的, index.html就会拉你自己的main.js
-  ![image](https://github.com/crazypeace/Url-Shorten-Worker/assets/665889/5f283aa2-d57f-4679-a987-757f1590e8f9)
+- Framework preset: `None`
+- Build command: 留空
+- Build output directory: `pages`
 
-- 激活你自己的Repo的GitHub Pages功能. (具体操作请google, 不详细展开了)
+在 Pages 项目的 Settings 中绑定 KV：
 
-# 在原版基础上的修改说明
-直接访问域名返回404。在KV中设置一个entry，保存秘密path，只有访问这个path才显示使用页面。  
-https://zelikk.blogspot.com/2022/07/url-shorten-worker-hide-tutorial.html
+- Binding name: `LINKS`
+- KV namespace: 选择你的短链 KV namespace
 
-支持自定义短链  
-https://zelikk.blogspot.com/2022/07/url-shorten-worker-custom.html
+密码有两种设置方式，任选一种：
 
-API 不公开服务  
-https://zelikk.blogspot.com/2022/07/url-shorten-worker-api-password.html
+- 推荐：在 Pages 环境变量里设置 `USW_PASSWORD`
+- 兼容旧方案：在 KV 里设置 key 为 `password` 的记录
 
-页面缓存设置过的短链  
-https://zelikk.blogspot.com/2022/08/url-shorten-worker-localstorage.html
+部署完成后，直接访问 Pages 域名即可使用管理页，例如：
 
-长链接文本框预搜索localStorage  
-https://zelikk.blogspot.com/2022/08/url-shorten-worker-bootstrap-list-group-oninput.html
+```text
+https://your-project.pages.dev
+```
 
-增加按钮可以删除某条短链  
-https://zelikk.blogspot.com/2022/08/url-shorten-worker-delete-kv-localstorage.html
+短链格式为：
 
-访问计数功能 可查询短链 成为功能完整的短链API系统  
-https://zelikk.blogspot.com/2023/11/url-shorten-worker-visit-count-api-api.html
+```text
+https://your-project.pages.dev/abc123
+```
 
-阅后即焚功能, 可制作一次性二维码  
-https://zelikk.blogspot.com/2023/11/url-shorten-worker-snapchat-mode.html
+## 数据保存方式
 
-增加读取 KV 中全部记录的功能  
-https://zelikk.blogspot.com/2024/01/url-shorten-worker-load-cloudflare-kv.html
+短链数据保存在绑定名为 `LINKS` 的 Cloudflare KV namespace 中：
 
-变身网络记事本 Pastebin  
-https://zelikk.blogspot.com/2024/01/url-shorten-worker-pastebin.html
+- `abc123` -> `https://example.com/long-url`
+- `my-link` -> `https://example.org/page`
 
-保护 'password' key  
-https://zelikk.blogspot.com/2024/01/url-shorten-worker-password-protect-keylist.html
+如果使用 KV 保存密码，会保存：
 
-变身图床 Image Hosting  
-https://zelikk.blogspot.com/2024/01/url-shorten-worker-image-hosting-base64.html
+- `password` -> `你的管理密码`
 
-变身网络日志本 支持 Markdown  
-https://zelikk.blogspot.com/2024/02/url-shorten-worker-netjournal.html  
-https://zelikk.blogspot.com/2024/02/url-shorten-worker-netjournal-markdown.html  
-https://zelikk.blogspot.com/2024/04/url-shorten-worker-netjournal-markdown.html
+`password` 不会出现在管理页的全量加载结果里，也不能通过 API 查询、删除或覆盖。
 
-# 用你的STAR告诉我这个Repo对你有用 Welcome STARs! :)
-[![Stargazers over time](https://starchart.cc/crazypeace/Url-Shorten-Worker.svg)](https://starchart.cc/crazypeace/Url-Shorten-Worker)
+短链 key 只允许 1 到 64 位的字母、数字、下划线和连字符，例如 `my-link`、`blog_2026`。`api` 和 `password` 是保留 key，不能用作短链。
+
+## 配置说明
+
+`functions/api.js` 中的 `custom_link` 控制是否允许自定义短链 key。
+
+`functions/api.js` 中的 `load_kv` 控制管理页是否可以一次性加载 KV 中的全部短链记录。
