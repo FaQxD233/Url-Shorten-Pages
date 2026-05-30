@@ -4,11 +4,7 @@ const config = {
 
 const protect_keylist = ["api", "password"]
 
-const html404 = `<!doctype html>
-<html lang="zh-CN">
-<head><meta charset="utf-8"><title>404 Not Found</title></head>
-<body><h1>404 Not Found.</h1><p>The url you visit is not found.</p></body>
-</html>`
+const notFoundText = "404 Not Found"
 
 const adminHtmlTemplate = `<!doctype html>
 <html lang="zh-CN">
@@ -298,17 +294,17 @@ export async function onRequestGet({ request, env, params }) {
   }
 
   if (protect_keylist.includes(key)) {
-    return new Response(html404, {
+    return new Response(notFoundText, {
       status: 404,
-      headers: { "Content-Type": "text/html; charset=UTF-8" },
+      headers: { "Content-Type": "text/plain; charset=UTF-8" },
     })
   }
 
   let value = await env.LINKS.get(key)
   if (!value) {
-    return new Response(html404, {
+    return new Response(notFoundText, {
       status: 404,
-      headers: { "Content-Type": "text/html; charset=UTF-8" },
+      headers: { "Content-Type": "text/plain; charset=UTF-8" },
     })
   }
 
