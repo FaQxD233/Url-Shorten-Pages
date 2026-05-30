@@ -26,11 +26,13 @@ Parameters:
 - `key`: short key, required for `del` and `qry`, optional for `add`
 - `password`: management password
 
-Key rules:
+New key rules for `add`:
 
 - 1-64 characters
 - Allowed characters: `A-Z`, `a-z`, `0-9`, `_`, `-`
 - Reserved keys: `api`, `password`
+
+For compatibility with existing KV data, `qry`, `del`, `qryall`, and redirects can read legacy keys that do not match the new-key rule, except reserved keys.
 
 Example response:
 

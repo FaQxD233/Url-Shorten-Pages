@@ -427,8 +427,7 @@ const adminHtmlTemplate = `<!doctype html>
       });
       document.querySelector("#queryBtn").addEventListener("click", () => {
         const key = els.queryKey.value.trim();
-        const keyError = validateKey(key);
-        if (keyError) return setStatus(keyError, "err");
+        if (!key) return setStatus("Key 不能为空", "err");
         if (key) queryKey(key);
       });
       document.querySelector("#loadAllBtn").addEventListener("click", loadAll);

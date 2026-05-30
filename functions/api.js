@@ -57,6 +57,16 @@ function validateKey(key) {
   return ""
 }
 
+function validateStoredKey(key) {
+  if (!key) {
+    return "Error: Key required."
+  }
+  if (protect_keylist.includes(key)) {
+    return "Error: Key in protect_keylist."
+  }
+  return ""
+}
+
 async function randomString(len = 6) {
   const chars = "ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678"
   const values = new Uint32Array(len)
@@ -147,7 +157,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   if (req_cmd === "del") {
-    const keyError = validateKey(req_key)
+    const keyError = validateStoredKey(req_key)
     if (keyError) {
       return jsonResponse({ status: 500, key: req_key, error: keyError }, 500)
     }
@@ -157,7 +167,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   if (req_cmd === "qry") {
-    const keyError = validateKey(req_key)
+    const keyError = validateStoredKey(req_key)
     if (keyError) {
       return jsonResponse({ status: 500, key: req_key, error: keyError }, 500)
     }
@@ -179,7 +189,7 @@ export async function onRequestPost({ request, env }) {
     do {
       const page = cursor ? await env.LINKS.list({ cursor }) : await env.LINKS.list()
       cursor = page.cursor
-      const keys = page.keys.filter((item) => !protect_keylist.includes(item.name) && keyPattern.test(item.name))
+      const keys = page.keys.filter((item) => !protect_keylist.includes(item.name))
       const values = await Promise.all(keys.map((item) => env.LINKS.get(item.name)))
       for (let i = 0; i < keys.length; i++) {
         result.kvlist.push({ key: keys[i].name, value: values[i] })

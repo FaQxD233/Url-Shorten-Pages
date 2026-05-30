@@ -51,7 +51,9 @@ https://your-project.pages.dev/abc123
 
 `password` 不会出现在管理页的全量加载结果里，也不能通过 API 查询、删除或覆盖。
 
-短链 key 只允许 1 到 64 位的字母、数字、下划线和连字符，例如 `my-link`、`blog_2026`。`api` 和 `password` 是保留 key，不能用作短链。
+新建短链时，key 只允许 1 到 64 位的字母、数字、下划线和连字符，例如 `my-link`、`blog_2026`。`api` 和 `password` 是保留 key，不能用作短链。
+
+为了兼容旧 KV 数据，查询、删除、全量加载和跳转不会用新建短链规则过滤历史 key，除 `api` 和 `password` 外都会尝试读取。
 
 ## 配置说明
 
