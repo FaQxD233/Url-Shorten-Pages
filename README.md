@@ -1,3 +1,5 @@
+forked from https://github.com/crazypeace/Url-Shorten-Worker
+
 # Url Shorten Worker for Cloudflare Pages
 
 这是一个 Cloudflare Pages 一体化短链项目。静态管理页、API、短链跳转都由同一个 Pages 项目提供，不需要再单独部署 Cloudflare Worker，也不依赖 GitHub Pages、jsDelivr、Bootstrap 或 jQuery。
