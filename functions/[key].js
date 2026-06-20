@@ -14,7 +14,7 @@ const adminHtmlTemplate = `<!doctype html>
   <title>URL Shortener</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.0.3/dist/fonts/geist-sans/style.css">
   <style>
     * {
       margin: 0;
@@ -33,10 +33,13 @@ const adminHtmlTemplate = `<!doctype html>
       --claude-orange-hover: #D66B31;
       --danger: #DC2626;
       --danger-hover: #B91C1C;
+      --shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      --focus-ring: 0 0 0 3px rgba(232, 122, 62, 0.15);
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Geist', 'Geist Sans', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
@@ -71,7 +74,7 @@ const adminHtmlTemplate = `<!doctype html>
 
     .form-grid {
       display: grid;
-      grid-template-columns: 1fr 240px 120px;
+      grid-template-columns: 1fr 240px max-content;
       gap: 12px;
       margin-bottom: 16px;
       align-items: start;
@@ -99,13 +102,15 @@ const adminHtmlTemplate = `<!doctype html>
       background: white;
       border: 1px solid var(--border);
       border-radius: 6px;
-      transition: border-color 0.2s;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.01);
     }
 
     input:focus,
     textarea:focus {
       outline: none;
-      border-color: var(--accent);
+      border-color: var(--claude-orange);
+      box-shadow: var(--focus-ring);
     }
 
     textarea {
@@ -127,11 +132,18 @@ const adminHtmlTemplate = `<!doctype html>
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    button:hover {
+    button:not(.action-btn):hover:not(:disabled) {
       background: var(--hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    button:not(.action-btn):active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: none;
     }
 
     button:disabled {
@@ -143,18 +155,23 @@ const adminHtmlTemplate = `<!doctype html>
       background: var(--claude-orange);
     }
 
-    .btn-primary:hover:not(:disabled) {
+    .btn-primary:not(.action-btn):hover:not(:disabled) {
       background: var(--claude-orange-hover);
+      box-shadow: 0 4px 12px rgba(232, 122, 62, 0.25);
     }
 
     .btn-ghost {
       color: var(--text);
       background: transparent;
       border: 1px solid var(--border);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .btn-ghost:hover {
+    .btn-ghost:not(.action-btn):hover:not(:disabled) {
       background: white;
+      border-color: var(--claude-orange);
+      color: var(--claude-orange);
+      box-shadow: 0 4px 12px rgba(232, 122, 62, 0.15);
     }
 
     .btn-danger {
@@ -210,6 +227,7 @@ const adminHtmlTemplate = `<!doctype html>
       border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
+      box-shadow: var(--shadow-md);
     }
 
     .table-header {
@@ -259,6 +277,7 @@ const adminHtmlTemplate = `<!doctype html>
     table {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
     }
 
     thead {
@@ -285,6 +304,14 @@ const adminHtmlTemplate = `<!doctype html>
       border-top: none;
     }
 
+    tbody tr {
+      transition: background-color 0.15s ease;
+    }
+
+    tbody tr:hover {
+      background-color: #F9FAFB;
+    }
+
     tbody tr.hidden {
       display: none;
     }
@@ -293,7 +320,10 @@ const adminHtmlTemplate = `<!doctype html>
       color: var(--text);
       text-decoration: none;
       font-weight: 500;
-      word-break: break-all;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .cell-link:hover {
@@ -304,19 +334,50 @@ const adminHtmlTemplate = `<!doctype html>
       color: var(--text-secondary);
       font-family: 'SF Mono', Menlo, Monaco, monospace;
       font-size: 13px;
-      word-break: break-all;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.5;
     }
 
     .cell-actions {
       display: flex;
-      gap: 6px;
+      gap: 16px;
       justify-content: flex-end;
+      opacity: 0;
+      transform: translateX(8px);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .cell-actions button {
-      height: 32px;
-      padding: 0 12px;
+    tbody tr:hover .cell-actions {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .action-btn {
+      background: transparent;
+      border: none;
+      padding: 0;
+      height: auto;
       font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+
+    .action-btn:hover {
+      background: transparent;
+      color: var(--text);
+      transform: none;
+      box-shadow: none;
+    }
+
+    .action-btn.danger:hover {
+      background: transparent;
+      color: var(--danger);
     }
 
     .empty {
@@ -324,6 +385,76 @@ const adminHtmlTemplate = `<!doctype html>
       text-align: center;
       color: var(--text-secondary);
       font-size: 14px;
+    }
+
+    .empty-state {
+      padding: 64px 20px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .empty-state-icon {
+      font-size: 24px;
+      opacity: 0.5;
+    }
+
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toast {
+      background: white;
+      color: var(--text);
+      padding: 16px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid var(--claude-orange);
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .toast.error {
+      border-left-color: var(--danger);
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #D4D4D4;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A3A3A3;
     }
 
     @media (max-width: 768px) {
@@ -342,6 +473,7 @@ const adminHtmlTemplate = `<!doctype html>
       .table-wrapper {
         border: none;
         border-radius: 0;
+        box-shadow: none;
       }
 
       .table-header {
@@ -378,6 +510,7 @@ const adminHtmlTemplate = `<!doctype html>
         border: 1px solid var(--border);
         border-radius: 8px;
         background: white;
+        box-shadow: var(--shadow-sm);
       }
 
       td {
@@ -395,65 +528,73 @@ const adminHtmlTemplate = `<!doctype html>
 
       .cell-actions {
         margin-top: 8px;
+        justify-content: flex-start;
+        gap: 20px;
+        opacity: 1;
+        transform: none;
       }
 
-      .cell-actions button {
-        flex: 1;
+      .toast-container {
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        align-items: stretch;
       }
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <header>
-      <h1>URL Shortener</h1>
+    <header style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <h1 data-i18n="title">URL Shortener</h1>
+      <button id="langToggleBtn" class="btn-ghost" style="height: 32px; padding: 0 12px; font-size: 13px;">中 / EN</button>
     </header>
 
     <section class="section">
-      <h2 class="section-title">New Link</h2>
+      <h2 class="section-title" data-i18n="newLink">New Link</h2>
 
       <form id="shortenForm">
         <div class="form-grid">
           <div class="form-field">
-            <label for="longURL">Destination URL</label>
+            <label for="longURL" data-i18n="destUrl">Destination URL</label>
             <textarea id="longURL" placeholder="https://example.com/long/path" required></textarea>
           </div>
 
           <div class="form-field">
-            <label for="keyPhrase">Custom key</label>
-            <input id="keyPhrase" type="text" maxlength="64" placeholder="my-link">
+            <label for="keyPhrase" data-i18n="customKey">Custom key</label>
+            <input id="keyPhrase" type="text" maxlength="64" placeholder="my-link" data-i18n-placeholder="customKeyPlaceholder">
           </div>
 
           <div class="form-field">
             <label>&nbsp;</label>
-            <button id="addBtn" type="submit" class="btn-primary">Create</button>
+            <button id="addBtn" type="submit" class="btn-primary" data-i18n="createBtn">Create</button>
           </div>
         </div>
 
         <div class="toolbar">
-          <button id="loadKVBtn" type="button" class="btn-ghost">Sync from KV</button>
-          <button id="clearLocalBtn" type="button" class="btn-ghost">Clear cache</button>
+          <button id="loadKVBtn" type="button" class="btn-ghost" data-i18n="syncBtn">Sync from KV</button>
+          <button id="clearLocalBtn" type="button" class="btn-ghost" data-i18n="clearBtn">Clear cache</button>
         </div>
 
-        <div class="status" id="result">Ready</div>
+        <div class="status" id="result" data-i18n="statusReady">Ready</div>
       </form>
     </section>
 
     <section class="section">
       <div class="table-wrapper">
         <div class="table-header">
-          <h2>Links</h2>
+          <h2 data-i18n="linksTitle">Links</h2>
           <div class="table-controls">
             <span class="count" id="linkCount">0 total</span>
-            <input type="text" id="searchBox" class="search-box" placeholder="Search links...">
+            <input type="text" id="searchBox" class="search-box" placeholder="Search links..." data-i18n-placeholder="searchPlaceholder">
           </div>
         </div>
 
         <table>
           <thead>
             <tr>
-              <th style="width: 30%;">Key</th>
-              <th>Destination</th>
+              <th style="width: 30%;" data-i18n="thKey">Key</th>
+              <th data-i18n="thDest">Destination</th>
               <th style="width: 200px;"></th>
             </tr>
           </thead>
@@ -464,10 +605,49 @@ const adminHtmlTemplate = `<!doctype html>
     </section>
   </div>
 
+  <div id="toastContainer" class="toast-container"></div>
+
   <script>
     const apiBase = "__API_BASE__";
     const password = "__PASSWORD__";
     const storagePrefix = "usw:item:";
+
+    // i18n 字典
+    const dict = {
+      en: {
+        title: 'URL Shortener', newLink: 'New Link', destUrl: 'Destination URL', customKey: 'Custom key', customKeyPlaceholder: 'my-link', createBtn: 'Create', creatingBtn: 'Creating...', syncBtn: 'Sync from KV', syncingBtn: 'Syncing...', clearBtn: 'Clear cache', statusReady: 'Ready', linksTitle: 'Links', searchPlaceholder: 'Search links...', thKey: 'Key', thDest: 'Destination', btnEdit: 'Edit', btnCopy: 'Copy', btnDelete: 'Delete', totalFormat: (n, v) => v ? \`\${v} of \${n} total\` : \`\${n} total\`, msgCreated: 'Link created: ', msgCopied: 'Copied: ', msgFailed: 'Failed to copy', msgDeleted: 'Deleted: ', msgSynced: (n) => \`Synced \${n} links from KV\`, msgCleared: 'Local cache cleared', msgLoaded: 'Link loaded into form', msgCreating: 'Creating link...', msgSyncing: 'Syncing from KV...', msgUrlRequired: 'URL is required', emptyText: 'No links yet. Create your first short link above.'
+      },
+      zh: {
+        title: '短链接生成器', newLink: '创建新链接', destUrl: '目标 URL', customKey: '自定义短链', customKeyPlaceholder: '例如: my-link', createBtn: '生成', creatingBtn: '生成中...', syncBtn: '同步 KV', syncingBtn: '同步中...', clearBtn: '清理缓存', statusReady: '已就绪', linksTitle: '所有链接', searchPlaceholder: '搜索短链...', thKey: '短链', thDest: '目标地址', btnEdit: '编辑', btnCopy: '复制', btnDelete: '删除', totalFormat: (n, v) => v ? \`\${v} / 共 \${n} 条\` : \`共 \${n} 条记录\`, msgCreated: '已创建链接: ', msgCopied: '已复制: ', msgFailed: '复制失败', msgDeleted: '已删除: ', msgSynced: (n) => \`已同步 \${n} 条记录\`, msgCleared: '已清理本地缓存', msgLoaded: '已将链接信息填入表单', msgCreating: '正在创建链接...', msgSyncing: '正在同步...', msgUrlRequired: '请输入 URL', emptyText: '还没有短链。请在上方创建第一个短链。'
+      }
+    };
+
+    let currentLang = navigator.language.startsWith('zh') ? 'zh' : 'en';
+
+    function updateI18n() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[currentLang][key]) el.textContent = dict[currentLang][key];
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (dict[currentLang][key]) el.placeholder = dict[currentLang][key];
+      });
+      updateCount();
+    }
+
+    function showToast(message, isError = false) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast' + (isError ? ' error' : '');
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+        setTimeout(() => container.removeChild(toast), 300);
+      }, 3000);
+    }
 
     const els = {
       form: document.querySelector("#shortenForm"),
@@ -480,6 +660,7 @@ const adminHtmlTemplate = `<!doctype html>
       urlList: document.querySelector("#urlList"),
       linkCount: document.querySelector("#linkCount"),
       searchBox: document.querySelector("#searchBox"),
+      langToggleBtn: document.querySelector("#langToggleBtn"),
     };
 
     let allLinks = [];
@@ -547,11 +728,7 @@ const adminHtmlTemplate = `<!doctype html>
     function updateCount() {
       const total = allLinks.length;
       const visible = els.urlList.querySelectorAll('tr:not(.hidden)').length;
-      if (els.searchBox.value.trim()) {
-        els.linkCount.textContent = visible + ' of ' + total + ' total';
-      } else {
-        els.linkCount.textContent = total + ' total';
-      }
+      els.linkCount.textContent = dict[currentLang].totalFormat(total, els.searchBox.value.trim() ? visible : 0);
     }
 
     function renderLocal() {
@@ -563,7 +740,7 @@ const adminHtmlTemplate = `<!doctype html>
         const emptyCell = document.createElement("td");
         emptyCell.colSpan = 3;
         emptyCell.className = "empty";
-        emptyCell.textContent = "No links yet. Create your first short link above.";
+        emptyCell.textContent = dict[currentLang].emptyText;
         emptyRow.appendChild(emptyCell);
         els.urlList.appendChild(emptyRow);
         updateCount();
@@ -581,12 +758,14 @@ const adminHtmlTemplate = `<!doctype html>
         link.href = shortUrlFor(item.key);
         link.textContent = item.key;
         link.target = "_blank";
+        link.title = item.key;
         keyCell.appendChild(link);
 
         const urlCell = document.createElement("td");
         const urlDiv = document.createElement("div");
         urlDiv.className = "cell-url";
         urlDiv.textContent = item.value;
+        urlDiv.title = item.value;
         urlCell.appendChild(urlDiv);
 
         const actionsCell = document.createElement("td");
@@ -595,32 +774,36 @@ const adminHtmlTemplate = `<!doctype html>
 
         const editBtn = document.createElement("button");
         editBtn.type = "button";
-        editBtn.className = "btn-ghost";
-        editBtn.textContent = "Edit";
+        editBtn.className = "action-btn";
+        editBtn.setAttribute('data-i18n', 'btnEdit');
+        editBtn.textContent = dict[currentLang].btnEdit;
         editBtn.addEventListener("click", () => {
           els.keyPhrase.value = item.key;
           els.longURL.value = item.value;
           window.scrollTo({ top: 0, behavior: 'smooth' });
-          setResult("Link loaded into form", "success");
+          els.longURL.focus();
+          showToast(dict[currentLang].msgLoaded);
         });
 
         const copyBtn = document.createElement("button");
         copyBtn.type = "button";
-        copyBtn.className = "btn-ghost";
-        copyBtn.textContent = "Copy";
+        copyBtn.className = "action-btn";
+        copyBtn.setAttribute('data-i18n', 'btnCopy');
+        copyBtn.textContent = dict[currentLang].btnCopy;
         copyBtn.addEventListener("click", async () => {
           try {
             await navigator.clipboard.writeText(shortUrlFor(item.key));
-            setResult("Copied: " + shortUrlFor(item.key), "success");
+            showToast(dict[currentLang].msgCopied + shortUrlFor(item.key));
           } catch (e) {
-            setResult("Failed to copy", "error");
+            showToast(dict[currentLang].msgFailed, true);
           }
         });
 
         const delBtn = document.createElement("button");
         delBtn.type = "button";
-        delBtn.className = "btn-danger";
-        delBtn.textContent = "Delete";
+        delBtn.className = "action-btn danger";
+        delBtn.setAttribute('data-i18n', 'btnDelete');
+        delBtn.textContent = dict[currentLang].btnDelete;
         delBtn.addEventListener("click", () => handleDelete(delBtn, item.key));
 
         actionsDiv.append(editBtn, copyBtn, delBtn);
@@ -643,7 +826,7 @@ const adminHtmlTemplate = `<!doctype html>
         deleteConfirmState.set(key, true);
 
         setTimeout(() => {
-          btn.textContent = "Delete";
+          btn.textContent = dict[currentLang].btnDelete;
           btn.classList.remove("confirm");
           deleteConfirmState.delete(key);
         }, 3000);
@@ -654,27 +837,39 @@ const adminHtmlTemplate = `<!doctype html>
       event.preventDefault();
       const url = els.longURL.value.trim();
       const key = els.keyPhrase.value.trim();
-      if (!url) return setResult("URL is required", "error");
+      if (!url) {
+        showToast(dict[currentLang].msgUrlRequired, true);
+        return;
+      }
 
       els.addBtn.disabled = true;
-      setResult("Creating link...");
+      const originalText = els.addBtn.textContent;
+      els.addBtn.textContent = dict[currentLang].creatingBtn;
+      setResult(dict[currentLang].msgCreating);
 
       try {
         const data = await apiRequest({ cmd: "add", url, key });
         saveLocal(data.key, url);
         renderLocal();
-        setResult("Link created: " + shortUrlFor(data.key), "success");
+        showToast(dict[currentLang].msgCreated + shortUrlFor(data.key));
+        setResult(dict[currentLang].msgCreated + shortUrlFor(data.key), "success");
         els.longURL.value = "";
         els.keyPhrase.value = "";
       } catch (error) {
+        showToast(error.message, true);
         setResult(error.message, "error");
       } finally {
         els.addBtn.disabled = false;
+        els.addBtn.textContent = originalText;
       }
     }
 
     async function loadKV() {
-      setResult("Syncing from KV...");
+      const originalText = els.loadKVBtn.textContent;
+      els.loadKVBtn.textContent = dict[currentLang].syncingBtn;
+      els.loadKVBtn.disabled = true;
+      setResult(dict[currentLang].msgSyncing);
+
       try {
         const data = await apiRequest({ cmd: "qryall" });
         localStorage.clear();
@@ -682,9 +877,14 @@ const adminHtmlTemplate = `<!doctype html>
           saveLocal(item.key, item.value);
         }
         renderLocal();
-        setResult("Synced " + data.kvlist.length + " links from KV", "success");
+        showToast(dict[currentLang].msgSynced(data.kvlist.length));
+        setResult(dict[currentLang].msgSynced(data.kvlist.length), "success");
       } catch (error) {
+        showToast(error.message, true);
         setResult(error.message, "error");
+      } finally {
+        els.loadKVBtn.disabled = false;
+        els.loadKVBtn.textContent = originalText;
       }
     }
 
@@ -693,8 +893,10 @@ const adminHtmlTemplate = `<!doctype html>
         await apiRequest({ cmd: "del", key });
         removeLocal(key);
         renderLocal();
-        setResult("Deleted: " + key, "success");
+        showToast(dict[currentLang].msgDeleted + key);
+        setResult(dict[currentLang].msgDeleted + key, "success");
       } catch (error) {
+        showToast(error.message, true);
         setResult(error.message, "error");
       }
     }
@@ -705,13 +907,19 @@ const adminHtmlTemplate = `<!doctype html>
       if (!confirm("Clear all local cache?")) return;
       localStorage.clear();
       renderLocal();
-      setResult("Local cache cleared", "success");
+      showToast(dict[currentLang].msgCleared);
+      setResult(dict[currentLang].msgCleared, "success");
     });
     els.searchBox.addEventListener("input", (e) => {
       filterLinks(e.target.value);
     });
+    els.langToggleBtn.addEventListener("click", () => {
+      currentLang = currentLang === 'en' ? 'zh' : 'en';
+      updateI18n();
+      renderLocal();
+    });
 
-    // 智能加载：首次访问自动加载 KV，后续使用本地缓存
+    updateI18n();
     if (localItems().length === 0) {
       loadKV();
     } else {
