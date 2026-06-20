@@ -173,6 +173,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     const result = { status: 200, error: "", kvlist: [] }
+    const maxItems = 10000
     let cursor
     do {
       const page = cursor ? await env.LINKS.list({ cursor }) : await env.LINKS.list()
@@ -181,6 +182,9 @@ export async function onRequestPost({ request, env }) {
       const values = await Promise.all(keys.map((item) => env.LINKS.get(item.name)))
       for (let i = 0; i < keys.length; i++) {
         result.kvlist.push({ key: keys[i].name, value: values[i] })
+      }
+      if (result.kvlist.length >= maxItems) {
+        break
       }
     } while (cursor)
 

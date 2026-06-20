@@ -529,7 +529,7 @@ const adminHtmlTemplate = `<!doctype html>
       .cell-actions {
         margin-top: 8px;
         justify-content: flex-start;
-        gap: 20px;
+        gap: 12px;
         opacity: 1;
         transform: none;
       }
@@ -574,6 +574,9 @@ const adminHtmlTemplate = `<!doctype html>
         <div class="toolbar">
           <button id="loadKVBtn" type="button" class="btn-ghost" data-i18n="syncBtn">Sync from KV</button>
           <button id="clearLocalBtn" type="button" class="btn-ghost" data-i18n="clearBtn">Clear cache</button>
+          <button id="exportBtn" type="button" class="btn-ghost" data-i18n="exportBtn">Export JSON</button>
+          <button id="importBtn" type="button" class="btn-ghost" data-i18n="importBtn">Import JSON</button>
+          <input type="file" id="importFile" accept=".json" style="display: none;">
         </div>
 
         <div class="status" id="result" data-i18n="statusReady">Ready</div>
@@ -615,10 +618,10 @@ const adminHtmlTemplate = `<!doctype html>
     // i18n 字典
     const dict = {
       en: {
-        title: 'URL Shortener', newLink: 'New Link', destUrl: 'Destination URL', customKey: 'Custom key', customKeyPlaceholder: 'my-link', createBtn: 'Create', creatingBtn: 'Creating...', syncBtn: 'Sync from KV', syncingBtn: 'Syncing...', clearBtn: 'Clear cache', statusReady: 'Ready', linksTitle: 'Links', searchPlaceholder: 'Search links...', thKey: 'Key', thDest: 'Destination', btnEdit: 'Edit', btnCopy: 'Copy', btnDelete: 'Delete', totalFormat: (n, v) => v ? \`\${v} of \${n} total\` : \`\${n} total\`, msgCreated: 'Link created: ', msgCopied: 'Copied: ', msgFailed: 'Failed to copy', msgDeleted: 'Deleted: ', msgSynced: (n) => \`Synced \${n} links from KV\`, msgCleared: 'Local cache cleared', msgLoaded: 'Link loaded into form', msgCreating: 'Creating link...', msgSyncing: 'Syncing from KV...', msgUrlRequired: 'URL is required', emptyText: 'No links yet. Create your first short link above.'
+        title: 'URL Shortener', newLink: 'New Link', destUrl: 'Destination URL', customKey: 'Custom key', customKeyPlaceholder: 'my-link', createBtn: 'Create', creatingBtn: 'Creating...', syncBtn: 'Sync from KV', syncingBtn: 'Syncing...', clearBtn: 'Clear cache', exportBtn: 'Export JSON', importBtn: 'Import JSON', statusReady: 'Ready', linksTitle: 'Links', searchPlaceholder: 'Search links...', thKey: 'Key', thDest: 'Destination', btnEdit: 'Edit', btnCopy: 'Copy', btnDelete: 'Delete', btnConfirm: 'Confirm?', totalFormat: (n, v) => v ? \`\${v} of \${n} total\` : \`\${n} total\`, msgCreated: 'Link created: ', msgCopied: 'Copied: ', msgFailed: 'Failed to copy', msgDeleted: 'Deleted: ', msgSynced: (n) => \`Synced \${n} links from KV\`, msgCleared: 'Local cache cleared', msgLoaded: 'Link loaded into form', msgCreating: 'Creating link...', msgSyncing: 'Syncing from KV...', msgUrlRequired: 'URL is required', msgExported: (n) => \`Exported \${n} links to JSON\`, msgImported: (n) => \`Imported \${n} links from JSON\`, msgImportFailed: 'Invalid JSON file', emptyText: 'No links yet. Create your first short link above.'
       },
       zh: {
-        title: '短链接生成器', newLink: '创建新链接', destUrl: '目标 URL', customKey: '自定义短链', customKeyPlaceholder: '例如: my-link', createBtn: '生成', creatingBtn: '生成中...', syncBtn: '同步 KV', syncingBtn: '同步中...', clearBtn: '清理缓存', statusReady: '已就绪', linksTitle: '所有链接', searchPlaceholder: '搜索短链...', thKey: '短链', thDest: '目标地址', btnEdit: '编辑', btnCopy: '复制', btnDelete: '删除', totalFormat: (n, v) => v ? \`\${v} / 共 \${n} 条\` : \`共 \${n} 条记录\`, msgCreated: '已创建链接: ', msgCopied: '已复制: ', msgFailed: '复制失败', msgDeleted: '已删除: ', msgSynced: (n) => \`已同步 \${n} 条记录\`, msgCleared: '已清理本地缓存', msgLoaded: '已将链接信息填入表单', msgCreating: '正在创建链接...', msgSyncing: '正在同步...', msgUrlRequired: '请输入 URL', emptyText: '还没有短链。请在上方创建第一个短链。'
+        title: '短链接生成器', newLink: '创建新链接', destUrl: '目标 URL', customKey: '自定义短链', customKeyPlaceholder: '例如: my-link', createBtn: '生成', creatingBtn: '生成中...', syncBtn: '同步 KV', syncingBtn: '同步中...', clearBtn: '清理缓存', exportBtn: '导出 JSON', importBtn: '导入 JSON', statusReady: '已就绪', linksTitle: '所有链接', searchPlaceholder: '搜索短链...', thKey: '短链', thDest: '目标地址', btnEdit: '编辑', btnCopy: '复制', btnDelete: '删除', btnConfirm: '确认删除?', totalFormat: (n, v) => v ? \`\${v} / 共 \${n} 条\` : \`共 \${n} 条记录\`, msgCreated: '已创建链接: ', msgCopied: '已复制: ', msgFailed: '复制失败', msgDeleted: '已删除: ', msgSynced: (n) => \`已同步 \${n} 条记录\`, msgCleared: '已清理本地缓存', msgLoaded: '已将链接信息填入表单', msgCreating: '正在创建链接...', msgSyncing: '正在同步...', msgUrlRequired: '请输入 URL', msgExported: (n) => \`已导出 \${n} 条记录到 JSON\`, msgImported: (n) => \`已导入 \${n} 条记录\`, msgImportFailed: 'JSON 文件格式错误', emptyText: '还没有短链。请在上方创建第一个短链。'
       }
     };
 
@@ -656,6 +659,9 @@ const adminHtmlTemplate = `<!doctype html>
       addBtn: document.querySelector("#addBtn"),
       loadKVBtn: document.querySelector("#loadKVBtn"),
       clearLocalBtn: document.querySelector("#clearLocalBtn"),
+      exportBtn: document.querySelector("#exportBtn"),
+      importBtn: document.querySelector("#importBtn"),
+      importFile: document.querySelector("#importFile"),
       result: document.querySelector("#result"),
       urlList: document.querySelector("#urlList"),
       linkCount: document.querySelector("#linkCount"),
@@ -665,6 +671,7 @@ const adminHtmlTemplate = `<!doctype html>
 
     let allLinks = [];
     const deleteConfirmState = new Map();
+    let searchTimeout;
 
     function setResult(text, type = 'default') {
       els.result.textContent = text;
@@ -821,7 +828,7 @@ const adminHtmlTemplate = `<!doctype html>
         deleteRecord(key);
         deleteConfirmState.delete(key);
       } else {
-        btn.textContent = "Confirm?";
+        btn.textContent = dict[currentLang].btnConfirm;
         btn.classList.add("confirm");
         deleteConfirmState.set(key, true);
 
@@ -901,6 +908,67 @@ const adminHtmlTemplate = `<!doctype html>
       }
     }
 
+    function exportJSON() {
+      const items = localItems();
+      if (!items.length) {
+        showToast(dict[currentLang].emptyText, true);
+        return;
+      }
+
+      const data = {
+        version: 1,
+        exportDate: new Date().toISOString(),
+        links: items
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = \`url-shortener-export-\${Date.now()}.json\`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showToast(dict[currentLang].msgExported(items.length));
+      setResult(dict[currentLang].msgExported(items.length), "success");
+    }
+
+    function importJSON() {
+      els.importFile.click();
+    }
+
+    function handleImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data.links || !Array.isArray(data.links)) {
+            throw new Error('Invalid format');
+          }
+
+          let imported = 0;
+          for (const item of data.links) {
+            if (item.key && item.value) {
+              saveLocal(item.key, item.value);
+              imported++;
+            }
+          }
+
+          renderLocal();
+          showToast(dict[currentLang].msgImported(imported));
+          setResult(dict[currentLang].msgImported(imported), "success");
+        } catch (error) {
+          showToast(dict[currentLang].msgImportFailed, true);
+          setResult(dict[currentLang].msgImportFailed, "error");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
     els.form.addEventListener("submit", createShortUrl);
     els.loadKVBtn.addEventListener("click", loadKV);
     els.clearLocalBtn.addEventListener("click", () => {
@@ -910,8 +978,14 @@ const adminHtmlTemplate = `<!doctype html>
       showToast(dict[currentLang].msgCleared);
       setResult(dict[currentLang].msgCleared, "success");
     });
+    els.exportBtn.addEventListener("click", exportJSON);
+    els.importBtn.addEventListener("click", importJSON);
+    els.importFile.addEventListener("change", handleImport);
     els.searchBox.addEventListener("input", (e) => {
-      filterLinks(e.target.value);
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterLinks(e.target.value);
+      }, 300);
     });
     els.langToggleBtn.addEventListener("click", () => {
       currentLang = currentLang === 'en' ? 'zh' : 'en';
