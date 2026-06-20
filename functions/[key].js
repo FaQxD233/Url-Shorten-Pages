@@ -7,93 +7,715 @@ const protect_keylist = ["api", "password"]
 const notFoundText = "404 Not Found"
 
 const adminHtmlTemplate = `<!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Url Shorten Pages</title>
+  <title>URL Shortener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      color-scheme: light dark;
-      --bg: #eef2f7;
-      --card: #ffffff;
-      --text: #172033;
-      --muted: #64748b;
-      --line: #d7deea;
-      --primary: #2563eb;
-      --danger: #dc2626;
-      --soft: #f8fafc;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f172a;
-        --card: #172033;
-        --text: #e2e8f0;
-        --muted: #94a3b8;
-        --line: #2b3850;
-        --soft: #111827;
+
+    :root {
+      --bg: #FAFAF9;
+      --text: #0A0A0A;
+      --text-secondary: #737373;
+      --border: #E5E5E5;
+      --accent: #171717;
+      --hover: #404040;
+      --claude-orange: #E87A3E;
+      --claude-orange-hover: #D66B31;
+      --danger: #DC2626;
+      --danger-hover: #B91C1C;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 80px 24px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 48px;
+    }
+
+    .section {
+      margin-bottom: 64px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 240px 120px;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: start;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text);
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 0.2s;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 38px;
+      font-family: 'SF Mono', Menlo, Monaco, monospace;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    button {
+      height: 38px;
+      padding: 0 16px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: var(--hover);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--claude-orange);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--claude-orange-hover);
+    }
+
+    .btn-ghost {
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: white;
+    }
+
+    .btn-danger {
+      color: var(--danger);
+      background: transparent;
+      border: 1px solid var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger.confirm {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger.confirm:hover {
+      background: var(--danger-hover);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+    }
+
+    .status {
+      padding: 12px 14px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .status.success {
+      color: #059669;
+      background: #ECFDF5;
+      border-color: #059669;
+    }
+
+    .status.error {
+      color: var(--danger);
+      background: #FEF2F2;
+      border-color: var(--danger);
+    }
+
+    .table-wrapper {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 20px 24px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .table-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .table-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .count {
+      font-size: 14px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .search-box {
+      width: 220px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      padding: 10px 24px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: left;
+      color: var(--text-secondary);
+    }
+
+    td {
+      padding: 16px 24px;
+      font-size: 14px;
+      border-top: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tbody tr:first-child td {
+      border-top: none;
+    }
+
+    tbody tr.hidden {
+      display: none;
+    }
+
+    .cell-link {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      word-break: break-all;
+    }
+
+    .cell-link:hover {
+      text-decoration: underline;
+    }
+
+    .cell-url {
+      color: var(--text-secondary);
+      font-family: 'SF Mono', Menlo, Monaco, monospace;
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .cell-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .cell-actions button {
+      height: 32px;
+      padding: 0 12px;
+      font-size: 13px;
+    }
+
+    .empty {
+      padding: 60px 24px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .page {
+        padding: 40px 20px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid .form-field:last-child button {
+        width: 100%;
+      }
+
+      .table-wrapper {
+        border: none;
+        border-radius: 0;
+      }
+
+      .table-header {
+        padding: 16px 0;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .table-controls {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-box {
+        width: 100%;
+      }
+
+      table,
+      thead,
+      tbody,
+      tr,
+      th,
+      td {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: white;
+      }
+
+      td {
+        padding: 12px 16px;
+        border: none;
+      }
+
+      td:first-child {
+        padding-top: 16px;
+      }
+
+      td:last-child {
+        padding-bottom: 16px;
+      }
+
+      .cell-actions {
+        margin-top: 8px;
+      }
+
+      .cell-actions button {
+        flex: 1;
       }
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; color: var(--text); background: var(--bg); }
-    main { width: min(980px, calc(100vw - 28px)); margin: 0 auto; padding: 28px 0; }
-    h1 { margin: 0 0 18px; font-size: 32px; }
-    h2 { margin: 0 0 14px; font-size: 18px; }
-    .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: 18px; align-items: start; }
-    .card { border: 1px solid var(--line); border-radius: 16px; padding: 18px; background: var(--card); box-shadow: 0 12px 32px rgba(15, 23, 42, .08); }
-    .stack { display: grid; gap: 12px; }
-    label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
-    input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; color: var(--text); background: var(--soft); font: inherit; }
-    textarea { min-height: 108px; resize: vertical; }
-    button { border: 0; border-radius: 10px; padding: 10px 12px; color: #fff; background: var(--primary); font: inherit; font-weight: 650; cursor: pointer; }
-    button.secondary { color: var(--text); background: var(--line); }
-    button.danger { background: var(--danger); }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .status { min-height: 42px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); color: var(--muted); overflow-wrap: anywhere; }
-    .item { display: grid; gap: 9px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); }
-    .item a, .item code { overflow-wrap: anywhere; }
-    .item code { color: var(--muted); }
-    .list { display: grid; gap: 10px; }
-    .empty { color: var(--muted); }
-    @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Url Shorten Pages</h1>
-    <section class="grid">
-      <form class="card stack" id="shortenForm">
-        <h2>创建 / 覆盖本地记录</h2>
-        <label>
-          长链接
-          <textarea id="longURL" placeholder="https://example.com/" required></textarea>
-        </label>
-        <label>
-          短链接 Key，可留空自动生成
-          <input id="keyPhrase" type="text" maxlength="64" placeholder="my-link">
-        </label>
-        <div class="row">
-          <button id="addBtn" type="submit">创建短链</button>
-          <button class="secondary" id="loadKVBtn" type="button">load localStorage from KV</button>
-          <button class="secondary" id="loadLocalBtn" type="button">load localStorage</button>
-          <button class="danger" id="clearLocalBtn" type="button">clear localStorage</button>
+  <div class="page">
+    <header>
+      <h1>URL Shortener</h1>
+    </header>
+
+    <section class="section">
+      <h2 class="section-title">New Link</h2>
+
+      <form id="shortenForm">
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="longURL">Destination URL</label>
+            <textarea id="longURL" placeholder="https://example.com/long/path" required></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="keyPhrase">Custom key</label>
+            <input id="keyPhrase" type="text" maxlength="64" placeholder="my-link">
+          </div>
+
+          <div class="form-field">
+            <label>&nbsp;</label>
+            <button id="addBtn" type="submit" class="btn-primary">Create</button>
+          </div>
         </div>
+
+        <div class="toolbar">
+          <button id="loadKVBtn" type="button" class="btn-ghost">Sync from KV</button>
+          <button id="clearLocalBtn" type="button" class="btn-ghost">Clear cache</button>
+        </div>
+
+        <div class="status" id="result">Ready</div>
       </form>
-
-      <section class="card stack">
-        <h2>结果</h2>
-        <div class="status" id="result">等待操作</div>
-      </section>
     </section>
 
-    <section class="card stack" style="margin-top: 18px;">
-      <h2>短链列表</h2>
-      <div class="list" id="urlList"></div>
+    <section class="section">
+      <div class="table-wrapper">
+        <div class="table-header">
+          <h2>Links</h2>
+          <div class="table-controls">
+            <span class="count" id="linkCount">0 total</span>
+            <input type="text" id="searchBox" class="search-box" placeholder="Search links...">
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 30%;">Key</th>
+              <th>Destination</th>
+              <th style="width: 200px;"></th>
+            </tr>
+          </thead>
+          <tbody id="urlList">
+          </tbody>
+        </table>
+      </div>
     </section>
-  </main>
+  </div>
 
   <script>
+    const apiBase = "__API_BASE__";
+    const password = "__PASSWORD__";
+    const storagePrefix = "usw:item:";
+
+    const els = {
+      form: document.querySelector("#shortenForm"),
+      longURL: document.querySelector("#longURL"),
+      keyPhrase: document.querySelector("#keyPhrase"),
+      addBtn: document.querySelector("#addBtn"),
+      loadKVBtn: document.querySelector("#loadKVBtn"),
+      clearLocalBtn: document.querySelector("#clearLocalBtn"),
+      result: document.querySelector("#result"),
+      urlList: document.querySelector("#urlList"),
+      linkCount: document.querySelector("#linkCount"),
+      searchBox: document.querySelector("#searchBox"),
+    };
+
+    let allLinks = [];
+    const deleteConfirmState = new Map();
+
+    function setResult(text, type = 'default') {
+      els.result.textContent = text;
+      els.result.className = 'status';
+      if (type === 'success') els.result.classList.add('success');
+      if (type === 'error') els.result.classList.add('error');
+    }
+
+    async function apiRequest(payload) {
+      const response = await fetch(apiBase, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, password }),
+      });
+      const data = await response.json();
+      if (data.status != 200) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
+    function shortUrlFor(key) {
+      return window.location.origin + "/" + encodeURIComponent(key);
+    }
+
+    function saveLocal(key, value) {
+      localStorage.setItem(storagePrefix + key, value);
+    }
+
+    function removeLocal(key) {
+      localStorage.removeItem(storagePrefix + key);
+    }
+
+    function localItems() {
+      const items = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const name = localStorage.key(i);
+        if (name && name.startsWith(storagePrefix)) {
+          items.push({ key: name.slice(storagePrefix.length), value: localStorage.getItem(name) });
+        }
+      }
+      items.sort((a, b) => a.key.localeCompare(b.key));
+      return items;
+    }
+
+    function filterLinks(searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const rows = els.urlList.querySelectorAll('tr');
+
+      rows.forEach(row => {
+        const key = row.dataset.key || '';
+        const url = row.dataset.url || '';
+        if (key.toLowerCase().includes(term) || url.toLowerCase().includes(term)) {
+          row.classList.remove('hidden');
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+
+      updateCount();
+    }
+
+    function updateCount() {
+      const total = allLinks.length;
+      const visible = els.urlList.querySelectorAll('tr:not(.hidden)').length;
+      if (els.searchBox.value.trim()) {
+        els.linkCount.textContent = visible + ' of ' + total + ' total';
+      } else {
+        els.linkCount.textContent = total + ' total';
+      }
+    }
+
+    function renderLocal() {
+      allLinks = localItems();
+      els.urlList.innerHTML = "";
+
+      if (!allLinks.length) {
+        const emptyRow = document.createElement("tr");
+        const emptyCell = document.createElement("td");
+        emptyCell.colSpan = 3;
+        emptyCell.className = "empty";
+        emptyCell.textContent = "No links yet. Create your first short link above.";
+        emptyRow.appendChild(emptyCell);
+        els.urlList.appendChild(emptyRow);
+        updateCount();
+        return;
+      }
+
+      for (const item of allLinks) {
+        const row = document.createElement("tr");
+        row.dataset.key = item.key;
+        row.dataset.url = item.value;
+
+        const keyCell = document.createElement("td");
+        const link = document.createElement("a");
+        link.className = "cell-link";
+        link.href = shortUrlFor(item.key);
+        link.textContent = item.key;
+        link.target = "_blank";
+        keyCell.appendChild(link);
+
+        const urlCell = document.createElement("td");
+        const urlDiv = document.createElement("div");
+        urlDiv.className = "cell-url";
+        urlDiv.textContent = item.value;
+        urlCell.appendChild(urlDiv);
+
+        const actionsCell = document.createElement("td");
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "cell-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "btn-ghost";
+        editBtn.textContent = "Edit";
+        editBtn.addEventListener("click", () => {
+          els.keyPhrase.value = item.key;
+          els.longURL.value = item.value;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setResult("Link loaded into form", "success");
+        });
+
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "btn-ghost";
+        copyBtn.textContent = "Copy";
+        copyBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(shortUrlFor(item.key));
+            setResult("Copied: " + shortUrlFor(item.key), "success");
+          } catch (e) {
+            setResult("Failed to copy", "error");
+          }
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn-danger";
+        delBtn.textContent = "Delete";
+        delBtn.addEventListener("click", () => handleDelete(delBtn, item.key));
+
+        actionsDiv.append(editBtn, copyBtn, delBtn);
+        actionsCell.appendChild(actionsDiv);
+
+        row.append(keyCell, urlCell, actionsCell);
+        els.urlList.appendChild(row);
+      }
+
+      updateCount();
+    }
+
+    function handleDelete(btn, key) {
+      if (deleteConfirmState.get(key)) {
+        deleteRecord(key);
+        deleteConfirmState.delete(key);
+      } else {
+        btn.textContent = "Confirm?";
+        btn.classList.add("confirm");
+        deleteConfirmState.set(key, true);
+
+        setTimeout(() => {
+          btn.textContent = "Delete";
+          btn.classList.remove("confirm");
+          deleteConfirmState.delete(key);
+        }, 3000);
+      }
+    }
+
+    async function createShortUrl(event) {
+      event.preventDefault();
+      const url = els.longURL.value.trim();
+      const key = els.keyPhrase.value.trim();
+      if (!url) return setResult("URL is required", "error");
+
+      els.addBtn.disabled = true;
+      setResult("Creating link...");
+
+      try {
+        const data = await apiRequest({ cmd: "add", url, key });
+        saveLocal(data.key, url);
+        renderLocal();
+        setResult("Link created: " + shortUrlFor(data.key), "success");
+        els.longURL.value = "";
+        els.keyPhrase.value = "";
+      } catch (error) {
+        setResult(error.message, "error");
+      } finally {
+        els.addBtn.disabled = false;
+      }
+    }
+
+    async function loadKV() {
+      setResult("Syncing from KV...");
+      try {
+        const data = await apiRequest({ cmd: "qryall" });
+        localStorage.clear();
+        for (const item of data.kvlist) {
+          saveLocal(item.key, item.value);
+        }
+        renderLocal();
+        setResult("Synced " + data.kvlist.length + " links from KV", "success");
+      } catch (error) {
+        setResult(error.message, "error");
+      }
+    }
+
+    async function deleteRecord(key) {
+      try {
+        await apiRequest({ cmd: "del", key });
+        removeLocal(key);
+        renderLocal();
+        setResult("Deleted: " + key, "success");
+      } catch (error) {
+        setResult(error.message, "error");
+      }
+    }
+
+    els.form.addEventListener("submit", createShortUrl);
+    els.loadKVBtn.addEventListener("click", loadKV);
+    els.clearLocalBtn.addEventListener("click", () => {
+      if (!confirm("Clear all local cache?")) return;
+      localStorage.clear();
+      renderLocal();
+      setResult("Local cache cleared", "success");
+    });
+    els.searchBox.addEventListener("input", (e) => {
+      filterLinks(e.target.value);
+    });
+
+    // 智能加载：首次访问自动加载 KV，后续使用本地缓存
+    if (localItems().length === 0) {
+      loadKV();
+    } else {
+      renderLocal();
+    }
+  </script>
     const apiBase = "__API_BASE__";
     const password = "__PASSWORD__";
     const storagePrefix = "usw:item:";
@@ -110,8 +732,11 @@ const adminHtmlTemplate = `<!doctype html>
       urlList: document.querySelector("#urlList"),
     };
 
-    function setResult(text) {
+    function setResult(text, type = 'default') {
       els.result.textContent = text;
+      els.result.className = 'status-box';
+      if (type === 'success') els.result.classList.add('success');
+      if (type === 'error') els.result.classList.add('error');
     }
 
     async function apiRequest(payload) {
@@ -121,7 +746,7 @@ const adminHtmlTemplate = `<!doctype html>
         body: JSON.stringify({ ...payload, password }),
       });
       const data = await response.json();
-      if (data.status != 200) throw new Error(data.error || "请求失败");
+      if (data.status != 200) throw new Error(data.error || "Request failed");
       return data;
     }
 
@@ -151,56 +776,65 @@ const adminHtmlTemplate = `<!doctype html>
 
     function renderLocal() {
       const items = localItems();
-      els.urlList.textContent = "";
+      els.urlList.innerHTML = "";
+
       if (!items.length) {
-        const empty = document.createElement("p");
-        empty.className = "empty";
-        empty.textContent = "localStorage 里暂无记录。";
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "No links yet. Create your first short link above.";
         els.urlList.append(empty);
         return;
       }
 
       for (const item of items) {
         const node = document.createElement("div");
-        node.className = "item";
+        node.className = "link-item";
 
         const link = document.createElement("a");
+        link.className = "link-url";
         link.href = shortUrlFor(item.key);
         link.textContent = shortUrlFor(item.key);
         link.target = "_blank";
 
-        const value = document.createElement("code");
-        value.textContent = item.value;
+        const target = document.createElement("div");
+        target.className = "link-target";
+        target.textContent = item.value;
 
         const actions = document.createElement("div");
-        actions.className = "row";
+        actions.className = "link-actions";
 
         const fillBtn = document.createElement("button");
         fillBtn.type = "button";
-        fillBtn.className = "secondary";
-        fillBtn.textContent = "填入表单";
+        fillBtn.className = "btn-secondary";
+        fillBtn.textContent = "Edit";
         fillBtn.addEventListener("click", () => {
           els.keyPhrase.value = item.key;
           els.longURL.value = item.value;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setResult("Link loaded into form", "success");
         });
 
         const copyBtn = document.createElement("button");
         copyBtn.type = "button";
-        copyBtn.className = "secondary";
-        copyBtn.textContent = "复制短链";
+        copyBtn.className = "btn-secondary";
+        copyBtn.textContent = "Copy";
         copyBtn.addEventListener("click", async () => {
-          await navigator.clipboard.writeText(shortUrlFor(item.key));
-          setResult("已复制: " + shortUrlFor(item.key));
+          try {
+            await navigator.clipboard.writeText(shortUrlFor(item.key));
+            setResult("Copied: " + shortUrlFor(item.key), "success");
+          } catch (e) {
+            setResult("Failed to copy", "error");
+          }
         });
 
         const delBtn = document.createElement("button");
         delBtn.type = "button";
-        delBtn.className = "danger";
-        delBtn.textContent = "删除 KV 记录";
+        delBtn.className = "btn-danger";
+        delBtn.textContent = "Delete";
         delBtn.addEventListener("click", () => deleteRecord(item.key));
 
         actions.append(fillBtn, copyBtn, delBtn);
-        node.append(link, value, actions);
+        node.append(link, target, actions);
         els.urlList.append(node);
       }
     }
@@ -209,22 +843,27 @@ const adminHtmlTemplate = `<!doctype html>
       event.preventDefault();
       const url = els.longURL.value.trim();
       const key = els.keyPhrase.value.trim();
-      if (!url) return setResult("长链接不能为空");
+      if (!url) return setResult("URL is required", "error");
 
       els.addBtn.disabled = true;
+      setResult("Creating link...");
+
       try {
         const data = await apiRequest({ cmd: "add", url, key });
         saveLocal(data.key, url);
         renderLocal();
-        setResult("创建成功: " + shortUrlFor(data.key));
+        setResult("Link created: " + shortUrlFor(data.key), "success");
+        els.longURL.value = "";
+        els.keyPhrase.value = "";
       } catch (error) {
-        setResult(error.message);
+        setResult(error.message, "error");
       } finally {
         els.addBtn.disabled = false;
       }
     }
 
     async function loadKV() {
+      setResult("Syncing from KV...");
       try {
         const data = await apiRequest({ cmd: "qryall" });
         localStorage.clear();
@@ -232,21 +871,21 @@ const adminHtmlTemplate = `<!doctype html>
           saveLocal(item.key, item.value);
         }
         renderLocal();
-        setResult("已从 KV 加载 " + data.kvlist.length + " 条记录到 localStorage");
+        setResult("Synced " + data.kvlist.length + " links from KV", "success");
       } catch (error) {
-        setResult(error.message);
+        setResult(error.message, "error");
       }
     }
 
     async function deleteRecord(key) {
-      if (!confirm("确定删除 KV 记录 " + key + " ?")) return;
+      if (!confirm("Delete link '" + key + "'?")) return;
       try {
         await apiRequest({ cmd: "del", key });
         removeLocal(key);
         renderLocal();
-        setResult("已删除: " + key);
+        setResult("Deleted: " + key, "success");
       } catch (error) {
-        setResult(error.message);
+        setResult(error.message, "error");
       }
     }
 
@@ -254,12 +893,13 @@ const adminHtmlTemplate = `<!doctype html>
     els.loadKVBtn.addEventListener("click", loadKV);
     els.loadLocalBtn.addEventListener("click", () => {
       renderLocal();
-      setResult("已加载 localStorage");
+      setResult("Loaded from local storage", "success");
     });
     els.clearLocalBtn.addEventListener("click", () => {
+      if (!confirm("Clear all local data?")) return;
       localStorage.clear();
       renderLocal();
-      setResult("已清空 localStorage");
+      setResult("Local storage cleared", "success");
     });
 
     renderLocal();
