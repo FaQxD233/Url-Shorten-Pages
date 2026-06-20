@@ -716,7 +716,7 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     function filterLinks(searchTerm) {
-      const terms = searchTerm.toLowerCase().split(/\s+/).filter(t => t);
+      const terms = searchTerm.toLowerCase().trim().split(/\\s+/).filter(t => t);
       const rows = els.urlList.querySelectorAll('tr');
 
       if (terms.length === 0) {
