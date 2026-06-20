@@ -719,6 +719,12 @@ const adminHtmlTemplate = `<!doctype html>
       const terms = searchTerm.toLowerCase().split(/\s+/).filter(t => t);
       const rows = els.urlList.querySelectorAll('tr');
 
+      if (terms.length === 0) {
+        rows.forEach(row => row.classList.remove('hidden'));
+        updateCount();
+        return;
+      }
+
       rows.forEach(row => {
         const key = row.dataset.key || '';
         const url = row.dataset.url || '';
