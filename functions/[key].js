@@ -891,18 +891,22 @@ const adminHtmlTemplate = `<!doctype html>
 
     els.form.addEventListener("submit", createShortUrl);
     els.loadKVBtn.addEventListener("click", loadKV);
-    els.loadLocalBtn.addEventListener("click", () => {
-      renderLocal();
-      setResult("Loaded from local storage", "success");
-    });
     els.clearLocalBtn.addEventListener("click", () => {
-      if (!confirm("Clear all local data?")) return;
+      if (!confirm("Clear all local cache?")) return;
       localStorage.clear();
       renderLocal();
-      setResult("Local storage cleared", "success");
+      setResult("Local cache cleared", "success");
+    });
+    els.searchBox.addEventListener("input", (e) => {
+      filterLinks(e.target.value);
     });
 
-    renderLocal();
+    // 智能加载：首次访问自动加载 KV，后续使用本地缓存
+    if (localItems().length === 0) {
+      loadKV();
+    } else {
+      renderLocal();
+    }
   </script>
 </body>
 </html>`
