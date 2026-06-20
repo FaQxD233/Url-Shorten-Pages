@@ -180,6 +180,7 @@ const adminHtmlTemplate = `<!doctype html>
     .toolbar {
       display: flex;
       gap: 8px;
+      margin-top: 16px;
     }
 
     .status {
@@ -189,6 +190,7 @@ const adminHtmlTemplate = `<!doctype html>
       background: white;
       border: 1px solid var(--border);
       border-radius: 6px;
+      margin-top: 16px;
     }
 
     .status.success {
