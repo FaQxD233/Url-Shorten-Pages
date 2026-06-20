@@ -716,13 +716,17 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     function filterLinks(searchTerm) {
-      const term = searchTerm.toLowerCase();
+      const terms = searchTerm.toLowerCase().split(/\s+/).filter(t => t);
       const rows = els.urlList.querySelectorAll('tr');
 
       rows.forEach(row => {
         const key = row.dataset.key || '';
         const url = row.dataset.url || '';
-        if (key.toLowerCase().includes(term) || url.toLowerCase().includes(term)) {
+        const combined = (key + ' ' + url).toLowerCase();
+
+        const matches = terms.every(term => combined.includes(term));
+
+        if (matches) {
           row.classList.remove('hidden');
         } else {
           row.classList.add('hidden');
