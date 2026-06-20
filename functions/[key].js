@@ -403,6 +403,37 @@ const adminHtmlTemplate = `<!doctype html>
       opacity: 0.5;
     }
 
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .pagination-info {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pagination-controls button {
+      height: 32px;
+      padding: 0 12px;
+      font-size: 13px;
+    }
+
+    .pagination-controls button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
     .toast-container {
       position: fixed;
       bottom: 24px;
@@ -534,6 +565,20 @@ const adminHtmlTemplate = `<!doctype html>
         transform: none;
       }
 
+      .pagination {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+      }
+
+      .pagination-controls {
+        width: 100%;
+      }
+
+      .pagination-controls button {
+        flex: 1;
+      }
+
       .toast-container {
         left: 20px;
         right: 20px;
@@ -604,6 +649,14 @@ const adminHtmlTemplate = `<!doctype html>
           <tbody id="urlList">
           </tbody>
         </table>
+
+        <div class="pagination" id="pagination">
+          <span class="pagination-info" id="pageInfo">Page 1 of 1</span>
+          <div class="pagination-controls">
+            <button id="prevPageBtn" class="btn-ghost" data-i18n="btnPrev">Previous</button>
+            <button id="nextPageBtn" class="btn-ghost" data-i18n="btnNext">Next</button>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -618,10 +671,10 @@ const adminHtmlTemplate = `<!doctype html>
     // i18n 字典
     const dict = {
       en: {
-        title: 'URL Shortener', newLink: 'New Link', destUrl: 'Destination URL', customKey: 'Custom key', customKeyPlaceholder: 'my-link', createBtn: 'Create', creatingBtn: 'Creating...', syncBtn: 'Sync from KV', syncingBtn: 'Syncing...', clearBtn: 'Clear cache', exportBtn: 'Export JSON', importBtn: 'Import JSON', statusReady: 'Ready', linksTitle: 'Links', searchPlaceholder: 'Search links...', thKey: 'Key', thDest: 'Destination', btnEdit: 'Edit', btnCopy: 'Copy', btnDelete: 'Delete', btnConfirm: 'Confirm?', totalFormat: (n, v) => v ? \`\${v} of \${n} total\` : \`\${n} total\`, msgCreated: 'Link created: ', msgCopied: 'Copied: ', msgFailed: 'Failed to copy', msgDeleted: 'Deleted: ', msgSynced: (n) => \`Synced \${n} links from KV\`, msgCleared: 'Local cache cleared', msgLoaded: 'Link loaded into form', msgCreating: 'Creating link...', msgSyncing: 'Syncing from KV...', msgUrlRequired: 'URL is required', msgExported: (n) => \`Exported \${n} links to JSON\`, msgImported: (n) => \`Imported \${n} links from JSON\`, msgImportFailed: 'Invalid JSON file', emptyText: 'No links yet. Create your first short link above.'
+        title: 'URL Shortener', newLink: 'New Link', destUrl: 'Destination URL', customKey: 'Custom key', customKeyPlaceholder: 'my-link', createBtn: 'Create', creatingBtn: 'Creating...', syncBtn: 'Sync from KV', syncingBtn: 'Syncing...', clearBtn: 'Clear cache', exportBtn: 'Export JSON', importBtn: 'Import JSON', statusReady: 'Ready', linksTitle: 'Links', searchPlaceholder: 'Search links...', thKey: 'Key', thDest: 'Destination', btnEdit: 'Edit', btnCopy: 'Copy', btnDelete: 'Delete', btnConfirm: 'Confirm?', totalFormat: (n, v) => v ? \`\${v} of \${n} total\` : \`\${n} total\`, msgCreated: 'Link created: ', msgCopied: 'Copied: ', msgFailed: 'Failed to copy', msgDeleted: 'Deleted: ', msgSynced: (n) => \`Synced \${n} links from KV\`, msgCleared: 'Local cache cleared', msgLoaded: 'Link loaded into form', msgCreating: 'Creating link...', msgSyncing: 'Syncing from KV...', msgUrlRequired: 'URL is required', msgExported: (n) => \`Exported \${n} links to JSON\`, msgImported: (n) => \`Imported \${n} links from JSON\`, msgImportFailed: 'Invalid JSON file', emptyText: 'No links yet. Create your first short link above.', confirmClear: 'Clear all local cache?', pageInfo: (current, total) => \`Page \${current} of \${total}\`, btnPrev: 'Previous', btnNext: 'Next'
       },
       zh: {
-        title: '短链接生成器', newLink: '创建新链接', destUrl: '目标 URL', customKey: '自定义短链', customKeyPlaceholder: '例如: my-link', createBtn: '生成', creatingBtn: '生成中...', syncBtn: '同步 KV', syncingBtn: '同步中...', clearBtn: '清理缓存', exportBtn: '导出 JSON', importBtn: '导入 JSON', statusReady: '已就绪', linksTitle: '所有链接', searchPlaceholder: '搜索短链...', thKey: '短链', thDest: '目标地址', btnEdit: '编辑', btnCopy: '复制', btnDelete: '删除', btnConfirm: '确认删除?', totalFormat: (n, v) => v ? \`\${v} / 共 \${n} 条\` : \`共 \${n} 条记录\`, msgCreated: '已创建链接: ', msgCopied: '已复制: ', msgFailed: '复制失败', msgDeleted: '已删除: ', msgSynced: (n) => \`已同步 \${n} 条记录\`, msgCleared: '已清理本地缓存', msgLoaded: '已将链接信息填入表单', msgCreating: '正在创建链接...', msgSyncing: '正在同步...', msgUrlRequired: '请输入 URL', msgExported: (n) => \`已导出 \${n} 条记录到 JSON\`, msgImported: (n) => \`已导入 \${n} 条记录\`, msgImportFailed: 'JSON 文件格式错误', emptyText: '还没有短链。请在上方创建第一个短链。'
+        title: '短链接生成器', newLink: '创建新链接', destUrl: '目标 URL', customKey: '自定义短链', customKeyPlaceholder: '例如: my-link', createBtn: '生成', creatingBtn: '生成中...', syncBtn: '同步 KV', syncingBtn: '同步中...', clearBtn: '清理缓存', exportBtn: '导出 JSON', importBtn: '导入 JSON', statusReady: '已就绪', linksTitle: '所有链接', searchPlaceholder: '搜索短链...', thKey: '短链', thDest: '目标地址', btnEdit: '编辑', btnCopy: '复制', btnDelete: '删除', btnConfirm: '确认删除?', totalFormat: (n, v) => v ? \`\${v} / 共 \${n} 条\` : \`共 \${n} 条记录\`, msgCreated: '已创建链接: ', msgCopied: '已复制: ', msgFailed: '复制失败', msgDeleted: '已删除: ', msgSynced: (n) => \`已同步 \${n} 条记录\`, msgCleared: '已清理本地缓存', msgLoaded: '已将链接信息填入表单', msgCreating: '正在创建链接...', msgSyncing: '正在同步...', msgUrlRequired: '请输入 URL', msgExported: (n) => \`已导出 \${n} 条记录到 JSON\`, msgImported: (n) => \`已导入 \${n} 条记录\`, msgImportFailed: 'JSON 文件格式错误', emptyText: '还没有短链。请在上方创建第一个短链。', confirmClear: '确认清空所有本地缓存？', pageInfo: (current, total) => \`第 \${current} / \${total} 页\`, btnPrev: '上一页', btnNext: '下一页'
       }
     };
 
@@ -646,9 +699,25 @@ const adminHtmlTemplate = `<!doctype html>
       toast.textContent = message;
       container.appendChild(toast);
 
+      // 限制最多显示 3 条 toast
+      const toasts = container.querySelectorAll('.toast');
+      if (toasts.length > 3) {
+        const oldestToast = toasts[0];
+        oldestToast.style.animation = 'fadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+        setTimeout(() => {
+          if (oldestToast.parentNode) {
+            container.removeChild(oldestToast);
+          }
+        }, 300);
+      }
+
       setTimeout(() => {
         toast.style.animation = 'fadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
-        setTimeout(() => container.removeChild(toast), 300);
+        setTimeout(() => {
+          if (toast.parentNode) {
+            container.removeChild(toast);
+          }
+        }, 300);
       }, 3000);
     }
 
@@ -667,9 +736,16 @@ const adminHtmlTemplate = `<!doctype html>
       linkCount: document.querySelector("#linkCount"),
       searchBox: document.querySelector("#searchBox"),
       langToggleBtn: document.querySelector("#langToggleBtn"),
+      pageInfo: document.querySelector("#pageInfo"),
+      prevPageBtn: document.querySelector("#prevPageBtn"),
+      nextPageBtn: document.querySelector("#nextPageBtn"),
+      pagination: document.querySelector("#pagination"),
     };
 
     let allLinks = [];
+    let filteredLinks = [];
+    let currentPage = 1;
+    const pageSize = 50;
     const deleteConfirmState = new Map();
     let searchTimeout;
 
@@ -717,42 +793,44 @@ const adminHtmlTemplate = `<!doctype html>
 
     function filterLinks(searchTerm) {
       const terms = searchTerm.toLowerCase().trim().split(/\\s+/).filter(t => t);
-      const rows = els.urlList.querySelectorAll('tr');
 
       if (terms.length === 0) {
-        rows.forEach(row => row.classList.remove('hidden'));
-        updateCount();
-        return;
+        filteredLinks = [...allLinks];
+      } else {
+        filteredLinks = allLinks.filter(item => {
+          const combined = (item.key + ' ' + item.value).toLowerCase();
+          return terms.every(term => combined.includes(term));
+        });
       }
 
-      rows.forEach(row => {
-        const key = row.dataset.key || '';
-        const url = row.dataset.url || '';
-        const combined = (key + ' ' + url).toLowerCase();
-
-        const matches = terms.every(term => combined.includes(term));
-
-        if (matches) {
-          row.classList.remove('hidden');
-        } else {
-          row.classList.add('hidden');
-        }
-      });
-
-      updateCount();
+      currentPage = 1;
+      renderPage();
     }
 
     function updateCount() {
       const total = allLinks.length;
-      const visible = els.urlList.querySelectorAll('tr:not(.hidden)').length;
+      const visible = filteredLinks.length;
       els.linkCount.textContent = dict[currentLang].totalFormat(total, els.searchBox.value.trim() ? visible : 0);
     }
 
-    function renderLocal() {
-      allLinks = localItems();
+    function updatePagination() {
+      const totalPages = Math.ceil(filteredLinks.length / pageSize);
+
+      if (totalPages <= 1) {
+        els.pagination.style.display = 'none';
+        return;
+      }
+
+      els.pagination.style.display = 'flex';
+      els.pageInfo.textContent = dict[currentLang].pageInfo(currentPage, totalPages);
+      els.prevPageBtn.disabled = currentPage === 1;
+      els.nextPageBtn.disabled = currentPage === totalPages;
+    }
+
+    function renderPage() {
       els.urlList.innerHTML = "";
 
-      if (!allLinks.length) {
+      if (!filteredLinks.length) {
         const emptyRow = document.createElement("tr");
         const emptyCell = document.createElement("td");
         emptyCell.colSpan = 3;
@@ -761,10 +839,15 @@ const adminHtmlTemplate = `<!doctype html>
         emptyRow.appendChild(emptyCell);
         els.urlList.appendChild(emptyRow);
         updateCount();
+        els.pagination.style.display = 'none';
         return;
       }
 
-      for (const item of allLinks) {
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageItems = filteredLinks.slice(start, end);
+
+      for (const item of pageItems) {
         const row = document.createElement("tr");
         row.dataset.key = item.key;
         row.dataset.url = item.value;
@@ -831,6 +914,14 @@ const adminHtmlTemplate = `<!doctype html>
       }
 
       updateCount();
+      updatePagination();
+    }
+
+    function renderLocal() {
+      allLinks = localItems();
+      filteredLinks = [...allLinks];
+      currentPage = 1;
+      renderPage();
     }
 
     function handleDelete(btn, key) {
@@ -931,11 +1022,13 @@ const adminHtmlTemplate = `<!doctype html>
         links: items
       };
 
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = \`url-shortener-export-\${Date.now()}.json\`;
+      a.download = \`url-shortener-export-\${dateStr}.json\`;
       a.click();
       URL.revokeObjectURL(url);
 
@@ -982,7 +1075,7 @@ const adminHtmlTemplate = `<!doctype html>
     els.form.addEventListener("submit", createShortUrl);
     els.loadKVBtn.addEventListener("click", loadKV);
     els.clearLocalBtn.addEventListener("click", () => {
-      if (!confirm("Clear all local cache?")) return;
+      if (!confirm(dict[currentLang].confirmClear)) return;
       localStorage.clear();
       renderLocal();
       showToast(dict[currentLang].msgCleared);
@@ -991,10 +1084,32 @@ const adminHtmlTemplate = `<!doctype html>
     els.exportBtn.addEventListener("click", exportJSON);
     els.importBtn.addEventListener("click", importJSON);
     els.importFile.addEventListener("change", handleImport);
+    els.prevPageBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPage();
+      }
+    });
+    els.nextPageBtn.addEventListener("click", () => {
+      const totalPages = Math.ceil(filteredLinks.length / pageSize);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderPage();
+      }
+    });
     els.searchBox.addEventListener("input", (e) => {
+      const value = e.target.value;
       clearTimeout(searchTimeout);
+
+      // 搜索框为空时立即重置，不需要防抖
+      if (!value.trim()) {
+        filterLinks(value);
+        return;
+      }
+
+      // 有内容时使用防抖
       searchTimeout = setTimeout(() => {
-        filterLinks(e.target.value);
+        filterLinks(value);
       }, 300);
     });
     els.langToggleBtn.addEventListener("click", () => {
