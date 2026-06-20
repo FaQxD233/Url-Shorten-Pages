@@ -1,0 +1,20 @@
+# 临时预览文件
+preview*.html
+demo.html
+
+# 编辑器和 IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# Node.js (如果未来需要)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

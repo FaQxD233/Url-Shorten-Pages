@@ -1,15 +1,12 @@
+import { constantTimeCompare, getSystemPassword, PROTECTED_KEYS, KEY_PATTERN } from './_shared.js'
+
 const config = {
-  password: "",
   custom_link: true,
   overwrite_kv: false,
   unique_link: false,
-  snapchat_mode: false,
   load_kv: true,
   system_type: "shorturl",
 }
-
-const protect_keylist = ["api", "password"]
-const keyPattern = /^[A-Za-z0-9_-]{1,64}$/
 
 const jsonHeaders = {
   "Content-Type": "application/json; charset=UTF-8",
@@ -25,15 +22,6 @@ function jsonResponse(body, status = 200) {
   })
 }
 
-async function systemPassword(env) {
-  if (env.USW_PASSWORD && env.USW_PASSWORD.trim()) {
-    return env.USW_PASSWORD.trim()
-  }
-  if (config.password.trim()) {
-    return config.password.trim()
-  }
-  return await env.LINKS.get("password")
-}
 
 function checkURL(value) {
   try {
@@ -48,10 +36,10 @@ function validateKey(key) {
   if (!key) {
     return "Error: Key required."
   }
-  if (!keyPattern.test(key)) {
+  if (!KEY_PATTERN.test(key)) {
     return "Error: Key only supports 1-64 letters, numbers, underscores, and hyphens."
   }
-  if (protect_keylist.includes(key)) {
+  if (PROTECTED_KEYS.includes(key)) {
     return "Error: Key in protect_keylist."
   }
   return ""
@@ -61,7 +49,7 @@ function validateStoredKey(key) {
   if (!key) {
     return "Error: Key required."
   }
-  if (protect_keylist.includes(key)) {
+  if (PROTECTED_KEYS.includes(key)) {
     return "Error: Key in protect_keylist."
   }
   return ""
@@ -112,9 +100,9 @@ export async function onRequestPost({ request, env }) {
     return jsonResponse({ status: 500, error: "Error: Invalid JSON." }, 500)
   }
 
-  const password = await systemPassword(env)
-  if (req.password != password) {
-    return jsonResponse({ status: 500, key: "", error: "Error: Invalid password." }, 500)
+  const password = await getSystemPassword(env)
+  if (!constantTimeCompare(req.password, password)) {
+    return jsonResponse({ status: 401, error: "Error: Invalid password." }, 401)
   }
 
   const req_cmd = req.cmd
@@ -189,7 +177,7 @@ export async function onRequestPost({ request, env }) {
     do {
       const page = cursor ? await env.LINKS.list({ cursor }) : await env.LINKS.list()
       cursor = page.cursor
-      const keys = page.keys.filter((item) => !protect_keylist.includes(item.name))
+      const keys = page.keys.filter((item) => !PROTECTED_KEYS.includes(item.name))
       const values = await Promise.all(keys.map((item) => env.LINKS.get(item.name)))
       for (let i = 0; i < keys.length; i++) {
         result.kvlist.push({ key: keys[i].name, value: values[i] })

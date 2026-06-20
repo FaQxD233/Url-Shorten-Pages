@@ -1,8 +1,8 @@
+import { constantTimeCompare, getSystemPassword, PROTECTED_KEYS } from './_shared.js'
+
 const config = {
   snapchat_mode: false,
 }
-
-const protect_keylist = ["api", "password"]
 
 const notFoundText = "404 Not Found"
 
@@ -721,12 +721,6 @@ const adminHtmlTemplate = `<!doctype html>
 </body>
 </html>`
 
-async function systemPassword(env) {
-  if (env.USW_PASSWORD && env.USW_PASSWORD.trim()) {
-    return env.USW_PASSWORD.trim()
-  }
-  return (await env.LINKS.get("password")) || ""
-}
 
 export async function onRequestGet({ request, env, params }) {
   const key = decodeURIComponent(params.key || "")
@@ -735,8 +729,8 @@ export async function onRequestGet({ request, env, params }) {
     return new Response("Missing KV binding LINKS.", { status: 500 })
   }
 
-  const password = await systemPassword(env)
-  if (password && key === password) {
+  const password = await getSystemPassword(env)
+  if (password && constantTimeCompare(key, password)) {
     const adminHtml = adminHtmlTemplate
       .replace(/__PASSWORD__/gm, password)
       .replace(/__API_BASE__/gm, new URL(request.url).origin + "/api")
@@ -747,7 +741,7 @@ export async function onRequestGet({ request, env, params }) {
     })
   }
 
-  if (protect_keylist.includes(key)) {
+  if (PROTECTED_KEYS.includes(key)) {
     return new Response(notFoundText, {
       status: 404,
       headers: { "Content-Type": "text/plain; charset=UTF-8" },
