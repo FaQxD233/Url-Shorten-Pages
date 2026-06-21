@@ -15,6 +15,7 @@ const adminHtmlTemplate = `<!doctype html>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.0.3/dist/fonts/geist-sans/style.css">
+  <script src="/qrcode.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -380,6 +381,102 @@ const adminHtmlTemplate = `<!doctype html>
       color: var(--danger);
     }
 
+    .checkbox-cell {
+      width: 48px;
+      padding: 16px 24px;
+    }
+
+    .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--claude-orange);
+    }
+
+    .bulk-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .bulk-actions.hidden {
+      display: none;
+    }
+
+    mark {
+      background-color: #FEF3C7;
+      color: var(--text);
+      padding: 1px 2px;
+      border-radius: 2px;
+    }
+
+    .qr-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .qr-modal.hidden {
+      display: none;
+    }
+
+    .qr-content {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      text-align: center;
+    }
+
+    .qr-content h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .qr-content .qr-key {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      font-family: 'SF Mono', Menlo, Monaco, monospace;
+    }
+
+    .qr-canvas {
+      margin: 0 auto 24px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+    }
+
+    .qr-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .qr-actions button {
+      flex: 1;
+    }
+
     .empty {
       padding: 60px 24px;
       text-align: center;
@@ -633,6 +730,10 @@ const adminHtmlTemplate = `<!doctype html>
         <div class="table-header">
           <h2 data-i18n="linksTitle">Links</h2>
           <div class="table-controls">
+            <div class="bulk-actions hidden" id="bulkActions">
+              <span class="count" id="selectedCount">0 selected</span>
+              <button id="bulkDeleteBtn" type="button" class="btn-danger" data-i18n="bulkDeleteBtn">Delete selected</button>
+            </div>
             <span class="count" id="linkCount">0 total</span>
             <input type="text" id="searchBox" class="search-box" placeholder="Search links..." data-i18n-placeholder="searchPlaceholder">
           </div>
@@ -641,9 +742,14 @@ const adminHtmlTemplate = `<!doctype html>
         <table>
           <thead>
             <tr>
+              <th style="width: 48px;">
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" id="selectAll">
+                </div>
+              </th>
               <th style="width: 30%;" data-i18n="thKey">Key</th>
               <th data-i18n="thDest">Destination</th>
-              <th style="width: 200px;"></th>
+              <th style="width: 240px;"></th>
             </tr>
           </thead>
           <tbody id="urlList">
@@ -663,6 +769,18 @@ const adminHtmlTemplate = `<!doctype html>
 
   <div id="toastContainer" class="toast-container"></div>
 
+  <div id="qrModal" class="qr-modal hidden">
+    <div class="qr-content">
+      <h3 data-i18n="qrTitle">QR Code</h3>
+      <div class="qr-key" id="qrKey"></div>
+      <canvas id="qrCanvas" class="qr-canvas"></canvas>
+      <div class="qr-actions">
+        <button id="qrDownloadBtn" class="btn-primary" data-i18n="qrDownload">Download</button>
+        <button id="qrCloseBtn" class="btn-ghost" data-i18n="qrClose">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const apiBase = "__API_BASE__";
     const password = "__PASSWORD__";
@@ -671,10 +789,10 @@ const adminHtmlTemplate = `<!doctype html>
     // i18n 字典
     const dict = {
       en: {
-        title: 'URL Shortener', newLink: 'New Link', destUrl: 'Destination URL', customKey: 'Custom key', customKeyPlaceholder: 'my-link', createBtn: 'Create', creatingBtn: 'Creating...', syncBtn: 'Sync from KV', syncingBtn: 'Syncing...', clearBtn: 'Clear cache', exportBtn: 'Export JSON', importBtn: 'Import JSON', statusReady: 'Ready', linksTitle: 'Links', searchPlaceholder: 'Search links...', thKey: 'Key', thDest: 'Destination', btnEdit: 'Edit', btnCopy: 'Copy', btnDelete: 'Delete', btnConfirm: 'Confirm?', totalFormat: (n, v) => v ? \`\${v} of \${n} total\` : \`\${n} total\`, msgCreated: 'Link created: ', msgCopied: 'Copied: ', msgFailed: 'Failed to copy', msgDeleted: 'Deleted: ', msgSynced: (n) => \`Synced \${n} links from KV\`, msgCleared: 'Local cache cleared', msgLoaded: 'Link loaded into form', msgCreating: 'Creating link...', msgSyncing: 'Syncing from KV...', msgUrlRequired: 'URL is required', msgExported: (n) => \`Exported \${n} links to JSON\`, msgImported: (n) => \`Imported \${n} links from JSON\`, msgImportFailed: 'Invalid JSON file', emptyText: 'No links yet. Create your first short link above.', confirmClear: 'Clear all local cache?', pageInfo: (current, total) => \`Page \${current} of \${total}\`, btnPrev: 'Previous', btnNext: 'Next'
+        title: 'URL Shortener', newLink: 'New Link', destUrl: 'Destination URL', customKey: 'Custom key', customKeyPlaceholder: 'my-link', createBtn: 'Create', creatingBtn: 'Creating...', updateBtn: 'Update', updatingBtn: 'Updating...', syncBtn: 'Sync from KV', syncingBtn: 'Syncing...', clearBtn: 'Clear cache', exportBtn: 'Export JSON', importBtn: 'Import JSON', statusReady: 'Ready', linksTitle: 'Links', searchPlaceholder: 'Search links...', thKey: 'Key', thDest: 'Destination', btnEdit: 'Edit', btnCopy: 'Copy', btnQR: 'QR', btnDelete: 'Delete', btnConfirm: 'Confirm?', bulkDeleteBtn: 'Delete selected', totalFormat: (n, v) => v ? \`\${v} of \${n} total\` : \`\${n} total\`, selectedFormat: (n) => \`\${n} selected\`, msgCreated: 'Link created: ', msgUpdated: 'Link updated: ', msgCopied: 'Copied: ', msgFailed: 'Failed to copy', msgDeleted: 'Deleted: ', msgBulkDeleted: (n) => \`Deleted \${n} links\`, msgSynced: (n) => \`Synced \${n} links from KV\`, msgCleared: 'Local cache cleared', msgLoaded: 'Link loaded into form', msgCreating: 'Creating link...', msgUpdating: 'Updating link...', msgSyncing: 'Syncing from KV...', msgUrlRequired: 'URL is required', msgExported: (n) => \`Exported \${n} links to JSON\`, msgImported: (n) => \`Imported \${n} links from JSON\`, msgImportFailed: 'Invalid JSON file', emptyText: 'No links yet. Create your first short link above.', confirmClear: 'Clear all local cache?', confirmBulkDelete: (n) => \`Delete \${n} selected links?\`, pageInfo: (current, total) => \`Page \${current} of \${total}\`, btnPrev: 'Previous', btnNext: 'Next', qrTitle: 'QR Code', qrDownload: 'Download', qrClose: 'Close'
       },
       zh: {
-        title: '短链接生成器', newLink: '创建新链接', destUrl: '目标 URL', customKey: '自定义短链', customKeyPlaceholder: '例如: my-link', createBtn: '生成', creatingBtn: '生成中...', syncBtn: '同步 KV', syncingBtn: '同步中...', clearBtn: '清理缓存', exportBtn: '导出 JSON', importBtn: '导入 JSON', statusReady: '已就绪', linksTitle: '所有链接', searchPlaceholder: '搜索短链...', thKey: '短链', thDest: '目标地址', btnEdit: '编辑', btnCopy: '复制', btnDelete: '删除', btnConfirm: '确认删除?', totalFormat: (n, v) => v ? \`\${v} / 共 \${n} 条\` : \`共 \${n} 条记录\`, msgCreated: '已创建链接: ', msgCopied: '已复制: ', msgFailed: '复制失败', msgDeleted: '已删除: ', msgSynced: (n) => \`已同步 \${n} 条记录\`, msgCleared: '已清理本地缓存', msgLoaded: '已将链接信息填入表单', msgCreating: '正在创建链接...', msgSyncing: '正在同步...', msgUrlRequired: '请输入 URL', msgExported: (n) => \`已导出 \${n} 条记录到 JSON\`, msgImported: (n) => \`已导入 \${n} 条记录\`, msgImportFailed: 'JSON 文件格式错误', emptyText: '还没有短链。请在上方创建第一个短链。', confirmClear: '确认清空所有本地缓存？', pageInfo: (current, total) => \`第 \${current} / \${total} 页\`, btnPrev: '上一页', btnNext: '下一页'
+        title: '短链接生成器', newLink: '创建新链接', destUrl: '目标 URL', customKey: '自定义短链', customKeyPlaceholder: '例如: my-link', createBtn: '生成', creatingBtn: '生成中...', updateBtn: '更新', updatingBtn: '更新中...', syncBtn: '同步 KV', syncingBtn: '同步中...', clearBtn: '清理缓存', exportBtn: '导出 JSON', importBtn: '导入 JSON', statusReady: '已就绪', linksTitle: '所有链接', searchPlaceholder: '搜索短链...', thKey: '短链', thDest: '目标地址', btnEdit: '编辑', btnCopy: '复制', btnQR: '二维码', btnDelete: '删除', btnConfirm: '确认删除?', bulkDeleteBtn: '删除选中项', totalFormat: (n, v) => v ? \`\${v} / 共 \${n} 条\` : \`共 \${n} 条记录\`, selectedFormat: (n) => \`已选中 \${n} 条\`, msgCreated: '已创建链接: ', msgUpdated: '已更新链接: ', msgCopied: '已复制: ', msgFailed: '复制失败', msgDeleted: '已删除: ', msgBulkDeleted: (n) => \`已删除 \${n} 条记录\`, msgSynced: (n) => \`已同步 \${n} 条记录\`, msgCleared: '已清理本地缓存', msgLoaded: '已将链接信息填入表单', msgCreating: '正在创建链接...', msgUpdating: '正在更新链接...', msgSyncing: '正在同步...', msgUrlRequired: '请输入 URL', msgExported: (n) => \`已导出 \${n} 条记录到 JSON\`, msgImported: (n) => \`已导入 \${n} 条记录\`, msgImportFailed: 'JSON 文件格式错误', emptyText: '还没有短链。请在上方创建第一个短链。', confirmClear: '确认清空所有本地缓存？', confirmBulkDelete: (n) => \`确认删除选中的 \${n} 条记录？\`, pageInfo: (current, total) => \`第 \${current} / \${total} 页\`, btnPrev: '上一页', btnNext: '下一页', qrTitle: '二维码', qrDownload: '下载', qrClose: '关闭'
       }
     };
 
@@ -740,6 +858,15 @@ const adminHtmlTemplate = `<!doctype html>
       prevPageBtn: document.querySelector("#prevPageBtn"),
       nextPageBtn: document.querySelector("#nextPageBtn"),
       pagination: document.querySelector("#pagination"),
+      selectAll: document.querySelector("#selectAll"),
+      bulkActions: document.querySelector("#bulkActions"),
+      selectedCount: document.querySelector("#selectedCount"),
+      bulkDeleteBtn: document.querySelector("#bulkDeleteBtn"),
+      qrModal: document.querySelector("#qrModal"),
+      qrKey: document.querySelector("#qrKey"),
+      qrCanvas: document.querySelector("#qrCanvas"),
+      qrDownloadBtn: document.querySelector("#qrDownloadBtn"),
+      qrCloseBtn: document.querySelector("#qrCloseBtn"),
     };
 
     let allLinks = [];
@@ -748,6 +875,9 @@ const adminHtmlTemplate = `<!doctype html>
     const pageSize = 50;
     const deleteConfirmState = new Map();
     let searchTimeout;
+    let selectedKeys = new Set();
+    let isEditMode = false;
+    let editingKey = null;
 
     function setResult(text, type = 'default') {
       els.result.textContent = text;
@@ -804,7 +934,37 @@ const adminHtmlTemplate = `<!doctype html>
       }
 
       currentPage = 1;
+      selectedKeys.clear();
+      updateBulkActions();
       renderPage();
+    }
+
+    function highlightText(text, searchTerm) {
+      if (!searchTerm.trim()) return text;
+
+      const terms = searchTerm.toLowerCase().trim().split(/\\s+/).filter(t => t);
+      let result = text;
+
+      for (const term of terms) {
+        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\\\]/g, '\\\\$&')})`, 'gi');
+        result = result.replace(regex, '<mark>$1</mark>');
+      }
+
+      return result;
+    }
+
+    function updateBulkActions() {
+      const count = selectedKeys.size;
+      if (count > 0) {
+        els.bulkActions.classList.remove('hidden');
+        els.selectedCount.textContent = dict[currentLang].selectedFormat(count);
+      } else {
+        els.bulkActions.classList.add('hidden');
+      }
+
+      const allPageKeys = filteredLinks.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(item => item.key);
+      const allSelected = allPageKeys.length > 0 && allPageKeys.every(key => selectedKeys.has(key));
+      els.selectAll.checked = allSelected;
     }
 
     function updateCount() {
@@ -833,12 +993,13 @@ const adminHtmlTemplate = `<!doctype html>
       if (!filteredLinks.length) {
         const emptyRow = document.createElement("tr");
         const emptyCell = document.createElement("td");
-        emptyCell.colSpan = 3;
+        emptyCell.colSpan = 4;
         emptyCell.className = "empty";
         emptyCell.textContent = dict[currentLang].emptyText;
         emptyRow.appendChild(emptyCell);
         els.urlList.appendChild(emptyRow);
         updateCount();
+        updateBulkActions();
         els.pagination.style.display = 'none';
         return;
       }
@@ -846,17 +1007,37 @@ const adminHtmlTemplate = `<!doctype html>
       const start = (currentPage - 1) * pageSize;
       const end = start + pageSize;
       const pageItems = filteredLinks.slice(start, end);
+      const searchTerm = els.searchBox.value;
 
       for (const item of pageItems) {
         const row = document.createElement("tr");
         row.dataset.key = item.key;
         row.dataset.url = item.value;
 
+        // Checkbox cell
+        const checkboxCell = document.createElement("td");
+        checkboxCell.className = "checkbox-cell";
+        const checkboxWrapper = document.createElement("div");
+        checkboxWrapper.className = "checkbox-wrapper";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = selectedKeys.has(item.key);
+        checkbox.addEventListener("change", (e) => {
+          if (e.target.checked) {
+            selectedKeys.add(item.key);
+          } else {
+            selectedKeys.delete(item.key);
+          }
+          updateBulkActions();
+        });
+        checkboxWrapper.appendChild(checkbox);
+        checkboxCell.appendChild(checkboxWrapper);
+
         const keyCell = document.createElement("td");
         const link = document.createElement("a");
         link.className = "cell-link";
         link.href = shortUrlFor(item.key);
-        link.textContent = item.key;
+        link.innerHTML = highlightText(item.key, searchTerm);
         link.target = "_blank";
         link.title = item.key;
         keyCell.appendChild(link);
@@ -864,7 +1045,7 @@ const adminHtmlTemplate = `<!doctype html>
         const urlCell = document.createElement("td");
         const urlDiv = document.createElement("div");
         urlDiv.className = "cell-url";
-        urlDiv.textContent = item.value;
+        urlDiv.innerHTML = highlightText(item.value, searchTerm);
         urlDiv.title = item.value;
         urlCell.appendChild(urlDiv);
 
@@ -878,8 +1059,14 @@ const adminHtmlTemplate = `<!doctype html>
         editBtn.setAttribute('data-i18n', 'btnEdit');
         editBtn.textContent = dict[currentLang].btnEdit;
         editBtn.addEventListener("click", () => {
+          isEditMode = true;
+          editingKey = item.key;
           els.keyPhrase.value = item.key;
+          els.keyPhrase.disabled = true;
           els.longURL.value = item.value;
+          els.addBtn.textContent = dict[currentLang].updateBtn;
+          els.addBtn.classList.remove('btn-primary');
+          els.addBtn.classList.add('btn-ghost');
           window.scrollTo({ top: 0, behavior: 'smooth' });
           els.longURL.focus();
           showToast(dict[currentLang].msgLoaded);
@@ -899,6 +1086,13 @@ const adminHtmlTemplate = `<!doctype html>
           }
         });
 
+        const qrBtn = document.createElement("button");
+        qrBtn.type = "button";
+        qrBtn.className = "action-btn";
+        qrBtn.setAttribute('data-i18n', 'btnQR');
+        qrBtn.textContent = dict[currentLang].btnQR;
+        qrBtn.addEventListener("click", () => showQRCode(item.key));
+
         const delBtn = document.createElement("button");
         delBtn.type = "button";
         delBtn.className = "action-btn danger";
@@ -906,14 +1100,15 @@ const adminHtmlTemplate = `<!doctype html>
         delBtn.textContent = dict[currentLang].btnDelete;
         delBtn.addEventListener("click", () => handleDelete(delBtn, item.key));
 
-        actionsDiv.append(editBtn, copyBtn, delBtn);
+        actionsDiv.append(editBtn, copyBtn, qrBtn, delBtn);
         actionsCell.appendChild(actionsDiv);
 
-        row.append(keyCell, urlCell, actionsCell);
+        row.append(checkboxCell, keyCell, urlCell, actionsCell);
         els.urlList.appendChild(row);
       }
 
       updateCount();
+      updateBulkActions();
       updatePagination();
     }
 
@@ -950,26 +1145,61 @@ const adminHtmlTemplate = `<!doctype html>
         return;
       }
 
-      els.addBtn.disabled = true;
-      const originalText = els.addBtn.textContent;
-      els.addBtn.textContent = dict[currentLang].creatingBtn;
-      setResult(dict[currentLang].msgCreating);
+      if (isEditMode && editingKey) {
+        // Update mode
+        els.addBtn.disabled = true;
+        const originalText = els.addBtn.textContent;
+        els.addBtn.textContent = dict[currentLang].updatingBtn;
+        setResult(dict[currentLang].msgUpdating);
 
-      try {
-        const data = await apiRequest({ cmd: "add", url, key });
-        saveLocal(data.key, url);
-        renderLocal();
-        showToast(dict[currentLang].msgCreated + shortUrlFor(data.key));
-        setResult(dict[currentLang].msgCreated + shortUrlFor(data.key), "success");
-        els.longURL.value = "";
-        els.keyPhrase.value = "";
-      } catch (error) {
-        showToast(error.message, true);
-        setResult(error.message, "error");
-      } finally {
-        els.addBtn.disabled = false;
-        els.addBtn.textContent = originalText;
+        try {
+          await apiRequest({ cmd: "update", url, key: editingKey });
+          saveLocal(editingKey, url);
+          renderLocal();
+          showToast(dict[currentLang].msgUpdated + shortUrlFor(editingKey));
+          setResult(dict[currentLang].msgUpdated + shortUrlFor(editingKey), "success");
+          resetForm();
+        } catch (error) {
+          showToast(error.message, true);
+          setResult(error.message, "error");
+        } finally {
+          els.addBtn.disabled = false;
+          els.addBtn.textContent = originalText;
+        }
+      } else {
+        // Create mode
+        els.addBtn.disabled = true;
+        const originalText = els.addBtn.textContent;
+        els.addBtn.textContent = dict[currentLang].creatingBtn;
+        setResult(dict[currentLang].msgCreating);
+
+        try {
+          const data = await apiRequest({ cmd: "add", url, key });
+          saveLocal(data.key, url);
+          renderLocal();
+          showToast(dict[currentLang].msgCreated + shortUrlFor(data.key));
+          setResult(dict[currentLang].msgCreated + shortUrlFor(data.key), "success");
+          els.longURL.value = "";
+          els.keyPhrase.value = "";
+        } catch (error) {
+          showToast(error.message, true);
+          setResult(error.message, "error");
+        } finally {
+          els.addBtn.disabled = false;
+          els.addBtn.textContent = originalText;
+        }
       }
+    }
+
+    function resetForm() {
+      isEditMode = false;
+      editingKey = null;
+      els.keyPhrase.disabled = false;
+      els.longURL.value = "";
+      els.keyPhrase.value = "";
+      els.addBtn.textContent = dict[currentLang].createBtn;
+      els.addBtn.classList.add('btn-primary');
+      els.addBtn.classList.remove('btn-ghost');
     }
 
     async function loadKV() {
@@ -1000,6 +1230,7 @@ const adminHtmlTemplate = `<!doctype html>
       try {
         await apiRequest({ cmd: "del", key });
         removeLocal(key);
+        selectedKeys.delete(key);
         renderLocal();
         showToast(dict[currentLang].msgDeleted + key);
         setResult(dict[currentLang].msgDeleted + key, "success");
@@ -1007,6 +1238,56 @@ const adminHtmlTemplate = `<!doctype html>
         showToast(error.message, true);
         setResult(error.message, "error");
       }
+    }
+
+    async function bulkDelete() {
+      const keys = Array.from(selectedKeys);
+      if (keys.length === 0) return;
+
+      if (!confirm(dict[currentLang].confirmBulkDelete(keys.length))) return;
+
+      try {
+        await apiRequest({ cmd: "batchdel", keys });
+        for (const key of keys) {
+          removeLocal(key);
+        }
+        selectedKeys.clear();
+        renderLocal();
+        showToast(dict[currentLang].msgBulkDeleted(keys.length));
+        setResult(dict[currentLang].msgBulkDeleted(keys.length), "success");
+      } catch (error) {
+        showToast(error.message, true);
+        setResult(error.message, "error");
+      }
+    }
+
+    function showQRCode(key) {
+      const url = shortUrlFor(key);
+      els.qrKey.textContent = url;
+
+      // Generate QR code using QRious
+      const qr = new QRious({
+        element: els.qrCanvas,
+        value: url,
+        size: 256,
+        background: '#FFFFFF',
+        foreground: '#1F2421',
+        level: 'H'
+      });
+
+      els.qrModal.classList.remove('hidden');
+    }
+
+    function closeQRModal() {
+      els.qrModal.classList.add('hidden');
+    }
+
+    function downloadQRCode() {
+      const url = els.qrCanvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `qr-${els.qrKey.textContent.split('/').pop()}.png`;
+      a.click();
     }
 
     function exportJSON() {
@@ -1077,6 +1358,7 @@ const adminHtmlTemplate = `<!doctype html>
     els.clearLocalBtn.addEventListener("click", () => {
       if (!confirm(dict[currentLang].confirmClear)) return;
       localStorage.clear();
+      selectedKeys.clear();
       renderLocal();
       showToast(dict[currentLang].msgCleared);
       setResult(dict[currentLang].msgCleared, "success");
@@ -1084,6 +1366,26 @@ const adminHtmlTemplate = `<!doctype html>
     els.exportBtn.addEventListener("click", exportJSON);
     els.importBtn.addEventListener("click", importJSON);
     els.importFile.addEventListener("change", handleImport);
+    els.selectAll.addEventListener("change", (e) => {
+      const pageItems = filteredLinks.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+      if (e.target.checked) {
+        pageItems.forEach(item => selectedKeys.add(item.key));
+      } else {
+        pageItems.forEach(item => selectedKeys.delete(item.key));
+      }
+      renderPage();
+    });
+    els.bulkDeleteBtn.addEventListener("click", bulkDelete);
+    els.qrCloseBtn.addEventListener("click", closeQRModal);
+    els.qrDownloadBtn.addEventListener("click", downloadQRCode);
+    els.qrModal.addEventListener("click", (e) => {
+      if (e.target === els.qrModal) closeQRModal();
+    });
+    els.longURL.addEventListener("input", () => {
+      if (isEditMode) {
+        resetForm();
+      }
+    });
     els.prevPageBtn.addEventListener("click", () => {
       if (currentPage > 1) {
         currentPage--;

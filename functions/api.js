@@ -144,6 +144,25 @@ export async function onRequestPost({ request, env }) {
     return jsonResponse({ status: 200, key, error: "" })
   }
 
+  if (req_cmd === "update") {
+    const keyError = validateStoredKey(req_key)
+    if (keyError) {
+      return jsonResponse({ status: 500, key: req_key, error: keyError }, 500)
+    }
+
+    if (config.system_type === "shorturl" && !checkURL(req_url)) {
+      return jsonResponse({ status: 500, url: req_url, error: "Error: Url illegal." }, 500)
+    }
+
+    const existed = await env.LINKS.get(req_key)
+    if (!existed) {
+      return jsonResponse({ status: 500, key: req_key, error: "Error: Key not exist." }, 500)
+    }
+
+    await env.LINKS.put(req_key, req_url)
+    return jsonResponse({ status: 200, key: req_key, error: "" })
+  }
+
   if (req_cmd === "del") {
     const keyError = validateStoredKey(req_key)
     if (keyError) {
@@ -152,6 +171,25 @@ export async function onRequestPost({ request, env }) {
 
     await env.LINKS.delete(req_key)
     return jsonResponse({ status: 200, key: req_key, error: "" })
+  }
+
+  if (req_cmd === "batchdel") {
+    const keys = req.keys || []
+    if (!Array.isArray(keys) || keys.length === 0) {
+      return jsonResponse({ status: 500, error: "Error: No keys provided." }, 500)
+    }
+
+    const errors = []
+    for (const key of keys) {
+      const keyError = validateStoredKey(key)
+      if (keyError) {
+        errors.push({ key, error: keyError })
+        continue
+      }
+      await env.LINKS.delete(key)
+    }
+
+    return jsonResponse({ status: 200, deleted: keys.length - errors.length, errors, error: "" })
   }
 
   if (req_cmd === "qry") {
