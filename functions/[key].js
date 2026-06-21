@@ -12,10 +12,7 @@ const adminHtmlTemplate = `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>URL Shortener</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.0.3/dist/fonts/geist-sans/style.css">
-  <script src="/qrcode.min.js"></script>
+  <link rel="stylesheet" href="/geist.css">
   <style>
     * {
       margin: 0;
@@ -781,6 +778,7 @@ const adminHtmlTemplate = `<!doctype html>
     </div>
   </div>
 
+  <script src="/qrcode.min.js"></script>
   <script>
     const apiBase = "__API_BASE__";
     const password = "__PASSWORD__";
@@ -942,11 +940,13 @@ const adminHtmlTemplate = `<!doctype html>
     function highlightText(text, searchTerm) {
       if (!searchTerm.trim()) return text;
 
-      const terms = searchTerm.toLowerCase().trim().split(/\\s+/).filter(t => t);
+      const terms = searchTerm.toLowerCase().trim().split(/\s+/).filter(t => t);
       let result = text;
 
       for (const term of terms) {
-        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\\\]/g, '\\\\$&')})`, 'gi');
+        // Escape special regex characters
+        const escapedTerm = term.replace(/[.*+?^$\{\}\(\)\|\[\]\\]/g, '\\$&');
+        const regex = new RegExp('(' + escapedTerm + ')', 'gi');
         result = result.replace(regex, '<mark>$1</mark>');
       }
 
@@ -1286,7 +1286,7 @@ const adminHtmlTemplate = `<!doctype html>
       const url = els.qrCanvas.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = url;
-      a.download = `qr-${els.qrKey.textContent.split('/').pop()}.png`;
+      a.download = 'qr-' + els.qrKey.textContent.split('/').pop() + '.png';
       a.click();
     }
 
@@ -1309,7 +1309,7 @@ const adminHtmlTemplate = `<!doctype html>
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = \`url-shortener-export-\${dateStr}.json\`;
+      a.download = 'url-shortener-export-' + dateStr + '.json';
       a.click();
       URL.revokeObjectURL(url);
 
