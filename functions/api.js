@@ -1,4 +1,4 @@
-import { constantTimeCompare, getSystemPassword, PROTECTED_KEYS, KEY_PATTERN } from './_shared.js'
+import { constantTimeCompare, getSystemPassword, jsonHeaders, jsonResponse, PROTECTED_KEYS, KEY_PATTERN } from './_shared.js'
 
 const config = {
   custom_link: true,
@@ -8,21 +8,6 @@ const config = {
   system_type: "shorturl",
 }
 
-const jsonHeaders = {
-  "Content-Type": "application/json; charset=UTF-8",
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-}
-
-function jsonResponse(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: jsonHeaders,
-  })
-}
-
-
 function checkURL(value) {
   try {
     const url = new URL(value)
@@ -30,6 +15,22 @@ function checkURL(value) {
   } catch (error) {
     return false
   }
+}
+
+async function mapLimit(items, limit, mapper) {
+  const results = new Array(items.length)
+  let nextIndex = 0
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex++
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex)
+    }
+  }
+
+  const workerCount = Math.min(limit, items.length)
+  await Promise.all(Array.from({ length: workerCount }, worker))
+  return results
 }
 
 function validateKey(key) {
@@ -210,18 +211,22 @@ export async function onRequestPost({ request, env }) {
       return jsonResponse({ status: 500, error: "Error: Config.load_kv false." }, 500)
     }
 
-    const result = { status: 200, error: "", kvlist: [] }
+    const result = { status: 200, error: "", kvlist: [], truncated: false, limit: 10000 }
     const maxItems = 10000
+    const getConcurrency = 20
     let cursor
     do {
       const page = cursor ? await env.LINKS.list({ cursor }) : await env.LINKS.list()
       cursor = page.cursor
-      const keys = page.keys.filter((item) => !PROTECTED_KEYS.includes(item.name))
-      const values = await Promise.all(keys.map((item) => env.LINKS.get(item.name)))
+      const remaining = maxItems - result.kvlist.length
+      const pageKeys = page.keys.filter((item) => !PROTECTED_KEYS.includes(item.name))
+      const keys = pageKeys.slice(0, remaining)
+      const values = await mapLimit(keys, getConcurrency, (item) => env.LINKS.get(item.name))
       for (let i = 0; i < keys.length; i++) {
         result.kvlist.push({ key: keys[i].name, value: values[i] })
       }
       if (result.kvlist.length >= maxItems) {
+        result.truncated = pageKeys.length > remaining || Boolean(cursor)
         break
       }
     } while (cursor)

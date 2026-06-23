@@ -780,17 +780,17 @@ const adminHtmlTemplate = `<!doctype html>
 
   <script src="/qrcode.min.js"></script>
   <script>
-    const apiBase = "__API_BASE__";
-    const password = "__PASSWORD__";
+    const apiBase = __API_BASE__;
+    const password = __PASSWORD__;
     const storagePrefix = "usw:item:";
 
     // i18n 字典
     const dict = {
       en: {
-        title: 'URL Shortener', newLink: 'New Link', destUrl: 'Destination URL', customKey: 'Custom key', customKeyPlaceholder: 'my-link', createBtn: 'Create', creatingBtn: 'Creating...', updateBtn: 'Update', updatingBtn: 'Updating...', syncBtn: 'Sync from KV', syncingBtn: 'Syncing...', clearBtn: 'Clear cache', exportBtn: 'Export JSON', importBtn: 'Import JSON', statusReady: 'Ready', linksTitle: 'Links', searchPlaceholder: 'Search links...', thKey: 'Key', thDest: 'Destination', btnEdit: 'Edit', btnCopy: 'Copy', btnQR: 'QR', btnDelete: 'Delete', btnConfirm: 'Confirm?', bulkDeleteBtn: 'Delete selected', totalFormat: (n, v) => v ? \`\${v} of \${n} total\` : \`\${n} total\`, selectedFormat: (n) => \`\${n} selected\`, msgCreated: 'Link created: ', msgUpdated: 'Link updated: ', msgCopied: 'Copied: ', msgFailed: 'Failed to copy', msgDeleted: 'Deleted: ', msgBulkDeleted: (n) => \`Deleted \${n} links\`, msgSynced: (n) => \`Synced \${n} links from KV\`, msgCleared: 'Local cache cleared', msgLoaded: 'Link loaded into form', msgCreating: 'Creating link...', msgUpdating: 'Updating link...', msgSyncing: 'Syncing from KV...', msgUrlRequired: 'URL is required', msgExported: (n) => \`Exported \${n} links to JSON\`, msgImported: (n) => \`Imported \${n} links from JSON\`, msgImportFailed: 'Invalid JSON file', emptyText: 'No links yet. Create your first short link above.', confirmClear: 'Clear all local cache?', confirmBulkDelete: (n) => \`Delete \${n} selected links?\`, pageInfo: (current, total) => \`Page \${current} of \${total}\`, btnPrev: 'Previous', btnNext: 'Next', qrTitle: 'QR Code', qrDownload: 'Download', qrClose: 'Close'
+        title: 'URL Shortener', newLink: 'New Link', destUrl: 'Destination URL', customKey: 'Custom key', customKeyPlaceholder: 'my-link', createBtn: 'Create', creatingBtn: 'Creating...', updateBtn: 'Update', updatingBtn: 'Updating...', syncBtn: 'Sync from KV', syncingBtn: 'Syncing...', clearBtn: 'Clear cache', exportBtn: 'Export JSON', importBtn: 'Import JSON', statusReady: 'Ready', linksTitle: 'Links', searchPlaceholder: 'Search links...', thKey: 'Key', thDest: 'Destination', btnEdit: 'Edit', btnCopy: 'Copy', btnQR: 'QR', btnDelete: 'Delete', btnConfirm: 'Confirm?', bulkDeleteBtn: 'Delete selected', totalFormat: (n, v) => v ? \`\${v} of \${n} total\` : \`\${n} total\`, selectedFormat: (n) => \`\${n} selected\`, msgCreated: 'Link created: ', msgUpdated: 'Link updated: ', msgCopied: 'Copied: ', msgFailed: 'Failed to copy', msgDeleted: 'Deleted: ', msgBulkDeleted: (n) => \`Deleted \${n} links\`, msgSynced: (n) => \`Synced \${n} links from KV\`, msgSyncedPartial: (n, limit) => \`Synced first \${n} links from KV. More links exist; API limit is \${limit}.\`, msgCleared: 'Local cache cleared', msgLoaded: 'Link loaded into form', msgCreating: 'Creating link...', msgUpdating: 'Updating link...', msgSyncing: 'Syncing from KV...', msgUrlRequired: 'URL is required', msgExported: (n) => \`Exported \${n} links to JSON\`, msgImported: (n) => \`Imported \${n} links from JSON\`, msgImportFailed: 'Invalid JSON file', emptyText: 'No links yet. Create your first short link above.', confirmClear: 'Clear all local cache?', confirmBulkDelete: (n) => \`Delete \${n} selected links?\`, pageInfo: (current, total) => \`Page \${current} of \${total}\`, btnPrev: 'Previous', btnNext: 'Next', qrTitle: 'QR Code', qrDownload: 'Download', qrClose: 'Close'
       },
       zh: {
-        title: '短链接生成器', newLink: '创建新链接', destUrl: '目标 URL', customKey: '自定义短链', customKeyPlaceholder: '例如: my-link', createBtn: '生成', creatingBtn: '生成中...', updateBtn: '更新', updatingBtn: '更新中...', syncBtn: '同步 KV', syncingBtn: '同步中...', clearBtn: '清理缓存', exportBtn: '导出 JSON', importBtn: '导入 JSON', statusReady: '已就绪', linksTitle: '所有链接', searchPlaceholder: '搜索短链...', thKey: '短链', thDest: '目标地址', btnEdit: '编辑', btnCopy: '复制', btnQR: '二维码', btnDelete: '删除', btnConfirm: '确认删除?', bulkDeleteBtn: '删除选中项', totalFormat: (n, v) => v ? \`\${v} / 共 \${n} 条\` : \`共 \${n} 条记录\`, selectedFormat: (n) => \`已选中 \${n} 条\`, msgCreated: '已创建链接: ', msgUpdated: '已更新链接: ', msgCopied: '已复制: ', msgFailed: '复制失败', msgDeleted: '已删除: ', msgBulkDeleted: (n) => \`已删除 \${n} 条记录\`, msgSynced: (n) => \`已同步 \${n} 条记录\`, msgCleared: '已清理本地缓存', msgLoaded: '已将链接信息填入表单', msgCreating: '正在创建链接...', msgUpdating: '正在更新链接...', msgSyncing: '正在同步...', msgUrlRequired: '请输入 URL', msgExported: (n) => \`已导出 \${n} 条记录到 JSON\`, msgImported: (n) => \`已导入 \${n} 条记录\`, msgImportFailed: 'JSON 文件格式错误', emptyText: '还没有短链。请在上方创建第一个短链。', confirmClear: '确认清空所有本地缓存？', confirmBulkDelete: (n) => \`确认删除选中的 \${n} 条记录？\`, pageInfo: (current, total) => \`第 \${current} / \${total} 页\`, btnPrev: '上一页', btnNext: '下一页', qrTitle: '二维码', qrDownload: '下载', qrClose: '关闭'
+        title: '短链接生成器', newLink: '创建新链接', destUrl: '目标 URL', customKey: '自定义短链', customKeyPlaceholder: '例如: my-link', createBtn: '生成', creatingBtn: '生成中...', updateBtn: '更新', updatingBtn: '更新中...', syncBtn: '同步 KV', syncingBtn: '同步中...', clearBtn: '清理缓存', exportBtn: '导出 JSON', importBtn: '导入 JSON', statusReady: '已就绪', linksTitle: '所有链接', searchPlaceholder: '搜索短链...', thKey: '短链', thDest: '目标地址', btnEdit: '编辑', btnCopy: '复制', btnQR: '二维码', btnDelete: '删除', btnConfirm: '确认删除?', bulkDeleteBtn: '删除选中项', totalFormat: (n, v) => v ? \`\${v} / 共 \${n} 条\` : \`共 \${n} 条记录\`, selectedFormat: (n) => \`已选中 \${n} 条\`, msgCreated: '已创建链接: ', msgUpdated: '已更新链接: ', msgCopied: '已复制: ', msgFailed: '复制失败', msgDeleted: '已删除: ', msgBulkDeleted: (n) => \`已删除 \${n} 条记录\`, msgSynced: (n) => \`已同步 \${n} 条记录\`, msgSyncedPartial: (n, limit) => \`已同步前 \${n} 条记录。KV 中仍有更多记录，API 当前上限为 \${limit}。\`, msgCleared: '已清理本地缓存', msgLoaded: '已将链接信息填入表单', msgCreating: '正在创建链接...', msgUpdating: '正在更新链接...', msgSyncing: '正在同步...', msgUrlRequired: '请输入 URL', msgExported: (n) => \`已导出 \${n} 条记录到 JSON\`, msgImported: (n) => \`已导入 \${n} 条记录\`, msgImportFailed: 'JSON 文件格式错误', emptyText: '还没有短链。请在上方创建第一个短链。', confirmClear: '确认清空所有本地缓存？', confirmBulkDelete: (n) => \`确认删除选中的 \${n} 条记录？\`, pageInfo: (current, total) => \`第 \${current} / \${total} 页\`, btnPrev: '上一页', btnNext: '下一页', qrTitle: '二维码', qrDownload: '下载', qrClose: '关闭'
       }
     };
 
@@ -919,6 +919,18 @@ const adminHtmlTemplate = `<!doctype html>
       return items;
     }
 
+    function escapeHtml(value) {
+      const htmlEntities = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+        '/': '&#x2F;'
+      };
+      return String(value).replace(/[&<>"'/]/g, (char) => htmlEntities[char]);
+    }
+
     function filterLinks(searchTerm) {
       const terms = searchTerm.toLowerCase().trim().split(/\\s+/).filter(t => t);
 
@@ -938,14 +950,13 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     function highlightText(text, searchTerm) {
-      if (!searchTerm.trim()) return text;
+      let result = escapeHtml(text);
+      if (!searchTerm.trim()) return result;
 
-      const terms = searchTerm.toLowerCase().trim().split(/\s+/).filter(t => t);
-      let result = text;
+      const terms = searchTerm.toLowerCase().trim().split(/\\s+/).filter(t => t);
 
       for (const term of terms) {
-        // Escape special regex characters
-        const escapedTerm = term.replace(/[.*+?^$\{\}\(\)\|\[\]\\]/g, '\\$&');
+        const escapedTerm = escapeHtml(term).replace(/[.*+?^$\{\}\(\)\|\[\]\\]/g, '\\$&');
         const regex = new RegExp('(' + escapedTerm + ')', 'gi');
         result = result.replace(regex, '<mark>$1</mark>');
       }
@@ -1215,8 +1226,11 @@ const adminHtmlTemplate = `<!doctype html>
           saveLocal(item.key, item.value);
         }
         renderLocal();
-        showToast(dict[currentLang].msgSynced(data.kvlist.length));
-        setResult(dict[currentLang].msgSynced(data.kvlist.length), "success");
+        const message = data.truncated
+          ? dict[currentLang].msgSyncedPartial(data.kvlist.length, data.limit)
+          : dict[currentLang].msgSynced(data.kvlist.length);
+        showToast(message, data.truncated);
+        setResult(message, data.truncated ? "error" : "success");
       } catch (error) {
         showToast(error.message, true);
         setResult(error.message, "error");
@@ -1430,6 +1444,40 @@ const adminHtmlTemplate = `<!doctype html>
 </body>
 </html>`
 
+function inlineJsonString(value) {
+  return JSON.stringify(String(value)).replace(/[<>&\u2028\u2029]/g, (char) => {
+    switch (char) {
+      case '<':
+        return '\\u003C'
+      case '>':
+        return '\\u003E'
+      case '&':
+        return '\\u0026'
+      case '\u2028':
+        return '\\u2028'
+      case '\u2029':
+        return '\\u2029'
+      default:
+        return char
+    }
+  })
+}
+
+function redirectUrlWithRequestQuery(value, requestSearch) {
+  const targetUrl = new URL(value)
+  if (targetUrl.protocol !== "http:" && targetUrl.protocol !== "https:") {
+    throw new Error("Unsupported redirect protocol.")
+  }
+
+  if (requestSearch) {
+    const params = new URLSearchParams(requestSearch)
+    for (const [name, paramValue] of params) {
+      targetUrl.searchParams.append(name, paramValue)
+    }
+  }
+
+  return targetUrl.toString()
+}
 
 export async function onRequestGet({ request, env, params }) {
   const key = decodeURIComponent(params.key || "")
@@ -1440,9 +1488,10 @@ export async function onRequestGet({ request, env, params }) {
 
   const password = await getSystemPassword(env)
   if (password && constantTimeCompare(key, password)) {
-    const adminHtml = adminHtmlTemplate
-      .replace(/__PASSWORD__/gm, password)
-      .replace(/__API_BASE__/gm, new URL(request.url).origin + "/api")
+    const apiBase = new URL(request.url).origin + "/api"
+    const adminHtml = adminHtmlTemplate.replace(/__PASSWORD__|__API_BASE__/gm, (token) => {
+      return token === "__PASSWORD__" ? inlineJsonString(password) : inlineJsonString(apiBase)
+    })
 
     return new Response(adminHtml, {
       status: 200,
@@ -1470,9 +1519,12 @@ export async function onRequestGet({ request, env, params }) {
   }
 
   const requestUrl = new URL(request.url)
-  if (requestUrl.search) {
-    value += requestUrl.search
+  try {
+    return Response.redirect(redirectUrlWithRequestQuery(value, requestUrl.search), 302)
+  } catch (error) {
+    return new Response("Invalid redirect URL.", {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=UTF-8" },
+    })
   }
-
-  return Response.redirect(value, 302)
 }

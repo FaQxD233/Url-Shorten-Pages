@@ -21,9 +21,10 @@ Request body: JSON
 
 Parameters:
 
-- `cmd`: `add`, `del`, `qry`, or `qryall`
-- `url`: long URL, required for `add`
-- `key`: short key, required for `del` and `qry`, optional for `add`
+- `cmd`: `add`, `update`, `del`, `batchdel`, `qry`, or `qryall`
+- `url`: long URL, required for `add` and `update`
+- `key`: short key, required for `update`, `del`, and `qry`, optional for `add`
+- `keys`: array of short keys, required for `batchdel`
 - `password`: management password
 
 New key rules for `add`:
@@ -33,6 +34,12 @@ New key rules for `add`:
 - Reserved keys: `api`, `password`
 
 For compatibility with existing KV data, `qry`, `del`, `qryall`, and redirects can read legacy keys that do not match the new-key rule, except reserved keys.
+
+The management page is served from the password path:
+
+```text
+https://your-project.pages.dev/your-password
+```
 
 Example response:
 
@@ -46,3 +53,12 @@ Example response:
 ```
 
 Data is stored in the KV namespace bound as `LINKS`.
+
+`qryall` returns up to `10000` records. When more records exist, the response includes:
+
+```json
+{
+  "truncated": true,
+  "limit": 10000
+}
+```

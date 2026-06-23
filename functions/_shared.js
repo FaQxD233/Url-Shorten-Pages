@@ -38,6 +38,20 @@ export function escapeHtml(str) {
   return String(str).replace(/[&<>"'/]/g, (char) => htmlEntities[char])
 }
 
+export const jsonHeaders = {
+  "Content-Type": "application/json; charset=UTF-8",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+}
+
+export function jsonResponse(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: jsonHeaders,
+  })
+}
+
 /**
  * 获取系统密码（统一逻辑）
  */
