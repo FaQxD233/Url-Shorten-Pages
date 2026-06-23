@@ -6,9 +6,11 @@ forked from https://github.com/crazypeace/Url-Shorten-Worker
 
 ## 项目结构
 
-- `pages/`：静态 404 页面
-- `functions/api.js`：Pages Functions API，负责新增、删除、查询短链
-- `functions/[key].js`：Pages Functions 跳转逻辑，负责 `/:key` 短链跳转；当路径等于管理密码时返回管理页
+- `functions/`：Cloudflare Pages Functions 源码，负责 API、短链跳转和管理页输出
+- `functions/api.js`：管理 API，负责新增、更新、删除、查询短链
+- `functions/[key].js`：短链跳转逻辑，负责 `/:key`；当路径等于管理密码时返回管理页
+- `pages/`：Cloudflare Pages 静态输出目录，只放静态资源，例如 `404.html`、`geist.css`、`qrcode.min.js` 和 `fonts/`
+- `pages/_routes.json`：Functions 路由规则。短链服务需要拦截大部分路径，但静态资源必须放在 `exclude` 里，否则会被 `functions/[key].js` 当作短链 key 处理并返回 404
 
 ## 部署
 
@@ -17,6 +19,8 @@ forked from https://github.com/crazypeace/Url-Shorten-Worker
 - Framework preset: `None`
 - Build command: 留空
 - Build output directory: `pages`
+
+保持 `wrangler.toml` 为当前兼容写法，不要改成 `pages_build_output_dir = "pages"`。这个项目的 KV binding 和环境变量依赖 Cloudflare Pages Dashboard 配置。
 
 在 Pages 项目的 Settings 中绑定 KV：
 
@@ -70,5 +74,6 @@ https://your-project.pages.dev/abc123
 - Pages 重新部署时，如果遇到旧页面残留，使用 `Redeploy` 并勾选 `Clear build cache`
 - 自定义域名只绑定到当前 Pages 项目，避免同时指向旧 Worker 或旧 Pages 项目
 - 不建议给管理密码路径和 `/api` 配置缓存规则
+- 新增本地静态资源时，需要放到 `pages/` 下，并同步添加到 `pages/_routes.json` 的 `exclude`，例如 `/assets/*`、`/favicon.ico`
 - 如果要降低短链请求数，可以在前置 CDN 缓存 3xx 响应，但删除或修改短链后可能不会立即生效
 - 如果不需要 Cloudflare Web Analytics 或其他额外观测功能，可以关闭以减少额外事件
