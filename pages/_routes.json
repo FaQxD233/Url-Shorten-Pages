@@ -6,6 +6,28 @@
   "exclude": [
     "/geist.css",
     "/qrcode.min.js",
-    "/fonts/*"
+    "/fonts/*",
+    "/favicon.ico",
+    "/robots.txt",
+    "/sitemap.xml",
+    "/sitemap.txt",
+    "/manifest.json",
+    "/apple-touch-icon.png",
+    "/apple-touch-icon-precomposed.png",
+    "/404.html",
+    "/.env",
+    "/.git/*",
+    "/wp-login.php",
+    "/wp-admin/*",
+    "/wp-content/*",
+    "/wp-includes/*",
+    "/xmlrpc.php",
+    "/phpmyadmin/*",
+    "/config.php",
+    "/db.php",
+    "/backup.php",
+    "/shell.php",
+    "/index.php",
+    "/info.php"
   ]
 }

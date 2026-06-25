@@ -40,9 +40,6 @@ export function escapeHtml(str) {
 
 export const jsonHeaders = {
   "Content-Type": "application/json; charset=UTF-8",
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
 }
 
 export function jsonResponse(body, status = 200) {
