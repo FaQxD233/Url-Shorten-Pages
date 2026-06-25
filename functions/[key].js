@@ -1482,6 +1482,14 @@ function redirectUrlWithRequestQuery(value, requestSearch) {
 export async function onRequestGet({ request, env, params }) {
   const key = decodeURIComponent(params.key || "")
 
+  // Fast-Path: 过滤明显无效的 key（包含 "/"），防止无意义的 KV 查询与资源消耗
+  if (!key || key.includes("/")) {
+    return new Response(notFoundText, {
+      status: 404,
+      headers: { "Content-Type": "text/plain; charset=UTF-8" },
+    })
+  }
+
   if (!env.LINKS) {
     return new Response("Missing KV binding LINKS.", { status: 500 })
   }
