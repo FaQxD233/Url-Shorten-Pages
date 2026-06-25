@@ -11,6 +11,7 @@ const adminHtmlTemplate = `<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
   <title>URL Shortener</title>
   <link rel="stylesheet" href="/geist.css">
   <style>
@@ -1050,6 +1051,7 @@ const adminHtmlTemplate = `<!doctype html>
         link.href = shortUrlFor(item.key);
         link.innerHTML = highlightText(item.key, searchTerm);
         link.target = "_blank";
+        link.rel = "noopener noreferrer";
         link.title = item.key;
         keyCell.appendChild(link);
 
@@ -1482,11 +1484,16 @@ function redirectUrlWithRequestQuery(value, requestSearch) {
 export async function onRequestGet({ request, env, params }) {
   const key = decodeURIComponent(params.key || "")
 
-  // Fast-Path: 过滤明显无效的 key（包含 "/"），防止无意义的 KV 查询与资源消耗
-  if (!key || key.includes("/")) {
+  // Fast-Path: 过滤明显无效的 key，防止无意义的 KV 查询与资源消耗
+  // 拒绝: 空 key、包含路径分隔符 (/ \)、URL 特殊字符 (? #)、超长 key (>256)
+  if (!key || key.length > 256 || /[/?#\\]/.test(key)) {
     return new Response(notFoundText, {
       status: 404,
-      headers: { "Content-Type": "text/plain; charset=UTF-8" },
+      headers: {
+        "Content-Type": "text/plain; charset=UTF-8",
+        "X-Content-Type-Options": "nosniff",
+        "CDN-Cache-Control": "max-age=86400",
+      },
     })
   }
 
@@ -1503,14 +1510,21 @@ export async function onRequestGet({ request, env, params }) {
 
     return new Response(adminHtml, {
       status: 200,
-      headers: { "Content-Type": "text/html; charset=UTF-8" },
+      headers: {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Referrer-Policy": "no-referrer",
+        "Cache-Control": "no-store",
+      },
     })
   }
 
   if (PROTECTED_KEYS.includes(key)) {
     return new Response(notFoundText, {
       status: 404,
-      headers: { "Content-Type": "text/plain; charset=UTF-8" },
+      headers: {
+        "Content-Type": "text/plain; charset=UTF-8",
+        "CDN-Cache-Control": "max-age=86400",
+      },
     })
   }
 
@@ -1518,7 +1532,10 @@ export async function onRequestGet({ request, env, params }) {
   if (!value) {
     return new Response(notFoundText, {
       status: 404,
-      headers: { "Content-Type": "text/plain; charset=UTF-8" },
+      headers: {
+        "Content-Type": "text/plain; charset=UTF-8",
+        "CDN-Cache-Control": "max-age=60",
+      },
     })
   }
 
@@ -1528,7 +1545,13 @@ export async function onRequestGet({ request, env, params }) {
 
   const requestUrl = new URL(request.url)
   try {
-    return Response.redirect(redirectUrlWithRequestQuery(value, requestUrl.search), 302)
+    return new Response(null, {
+      status: 302,
+      headers: {
+        "Location": redirectUrlWithRequestQuery(value, requestUrl.search),
+        "Cache-Control": "public, max-age=60",
+      },
+    })
   } catch (error) {
     return new Response("Invalid redirect URL.", {
       status: 500,

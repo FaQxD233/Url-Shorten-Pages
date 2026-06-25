@@ -56,6 +56,19 @@ function validateStoredKey(key) {
   return ""
 }
 
+/**
+ * 清除指定短链 key 在当前边缘节点的 CDN 缓存（302 或 KV miss 404）。
+ * 仅清除当前节点，其它节点靠短 TTL 兜底。best-effort，失败不阻塞主流程。
+ */
+async function purgeShortLinkCache(request, key) {
+  try {
+    const origin = new URL(request.url).origin
+    await caches.default.delete(origin + "/" + key)
+  } catch (e) {
+    // best-effort purge，忽略错误
+  }
+}
+
 async function randomString(len = 6) {
   const chars = "ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678"
   const values = new Uint32Array(len)
@@ -142,6 +155,7 @@ export async function onRequestPost({ request, env }) {
       key = await saveUrl(env, req_url)
     }
 
+    await purgeShortLinkCache(request, key)
     return jsonResponse({ status: 200, key, error: "" })
   }
 
@@ -161,6 +175,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     await env.LINKS.put(req_key, req_url)
+    await purgeShortLinkCache(request, req_key)
     return jsonResponse({ status: 200, key: req_key, error: "" })
   }
 
@@ -171,6 +186,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     await env.LINKS.delete(req_key)
+    await purgeShortLinkCache(request, req_key)
     return jsonResponse({ status: 200, key: req_key, error: "" })
   }
 
@@ -190,6 +206,7 @@ export async function onRequestPost({ request, env }) {
       await env.LINKS.delete(key)
     }
 
+    await Promise.all(keys.map((key) => purgeShortLinkCache(request, key)))
     return jsonResponse({ status: 200, deleted: keys.length - errors.length, errors, error: "" })
   }
 
