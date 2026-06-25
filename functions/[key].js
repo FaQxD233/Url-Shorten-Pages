@@ -1481,13 +1481,37 @@ function redirectUrlWithRequestQuery(value, requestSearch) {
   return targetUrl.toString()
 }
 
-export async function onRequestGet({ request, env, params }) {
+/**
+ * 构造 Cache API 的 cache key：去掉 query string，确保不同 query 共享同一缓存条目。
+ */
+function makeCacheKey(request) {
+  const url = new URL(request.url)
+  url.search = ""
+  return new Request(url, { method: "GET" })
+}
+
+/**
+ * 主动将响应写入当前边缘节点的 Cache API（best-effort，不阻塞主响应）。
+ * Pages Functions 默认不会缓存动态响应，仅设置 CDN-Cache-Control 头不生效，
+ * 必须用 caches.default.put() 主动写入。配合 api.js 的 purgeShortLinkCache() 可即时清除。
+ */
+function cacheResponse(waitUntil, request, response) {
+  try {
+    if (waitUntil) {
+      waitUntil(caches.default.put(makeCacheKey(request), response.clone()))
+    }
+  } catch (e) {
+    // best-effort，缓存写入失败不影响主流程
+  }
+}
+
+export async function onRequestGet({ request, env, params, waitUntil }) {
   const key = decodeURIComponent(params.key || "")
 
   // Fast-Path: 过滤明显无效的 key，防止无意义的 KV 查询与资源消耗
   // 拒绝: 空 key、包含路径分隔符 (/ \)、URL 特殊字符 (? #)、超长 key (>256)
   if (!key || key.length > 256 || /[/?#\\]/.test(key)) {
-    return new Response(notFoundText, {
+    const response = new Response(notFoundText, {
       status: 404,
       headers: {
         "Content-Type": "text/plain; charset=UTF-8",
@@ -1495,6 +1519,8 @@ export async function onRequestGet({ request, env, params }) {
         "CDN-Cache-Control": "max-age=86400",
       },
     })
+    cacheResponse(waitUntil, request, response)
+    return response
   }
 
   if (!env.LINKS) {
@@ -1519,24 +1545,28 @@ export async function onRequestGet({ request, env, params }) {
   }
 
   if (PROTECTED_KEYS.includes(key)) {
-    return new Response(notFoundText, {
+    const response = new Response(notFoundText, {
       status: 404,
       headers: {
         "Content-Type": "text/plain; charset=UTF-8",
         "CDN-Cache-Control": "max-age=86400",
       },
     })
+    cacheResponse(waitUntil, request, response)
+    return response
   }
 
   let value = await env.LINKS.get(key)
   if (!value) {
-    return new Response(notFoundText, {
+    const response = new Response(notFoundText, {
       status: 404,
       headers: {
         "Content-Type": "text/plain; charset=UTF-8",
         "CDN-Cache-Control": "max-age=60",
       },
     })
+    cacheResponse(waitUntil, request, response)
+    return response
   }
 
   if (config.snapchat_mode) {
@@ -1545,13 +1575,16 @@ export async function onRequestGet({ request, env, params }) {
 
   const requestUrl = new URL(request.url)
   try {
-    return new Response(null, {
+    const response = new Response(null, {
       status: 302,
       headers: {
         "Location": redirectUrlWithRequestQuery(value, requestUrl.search),
         "Cache-Control": "public, max-age=60",
       },
     })
+    // 主动写入 Cache API，让边缘节点缓存 60 秒，期间该节点的所有访问都不触发 Worker
+    cacheResponse(waitUntil, request, response)
+    return response
   } catch (error) {
     return new Response("Invalid redirect URL.", {
       status: 500,
