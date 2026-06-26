@@ -14,6 +14,9 @@ const adminHtmlTemplate = `<!doctype html>
   <meta name="referrer" content="no-referrer">
   <title>URL Shortener</title>
   <link rel="stylesheet" href="/geist.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -22,23 +25,51 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     :root {
+      /* 中性 */
       --bg: #FAFAF9;
+      --surface: #FFFFFF;
+      --surface-2: #F5F5F4;
       --text: #0A0A0A;
-      --text-secondary: #737373;
+      --text-secondary: #525252;
+      --text-tertiary: #737373;
       --border: #E5E5E5;
+      --border-strong: #D4D4D4;
       --accent: #171717;
       --hover: #404040;
-      --claude-orange: #E87A3E;
-      --claude-orange-hover: #D66B31;
+
+      /* 品牌(Claude 橙) */
+      --brand: #E87A3E;
+      --brand-hover: #D0682E;
+      --brand-soft: rgba(232, 122, 62, 0.12);
+
+      /* 语义 */
       --danger: #DC2626;
       --danger-hover: #B91C1C;
+      --danger-bg: #FEF2F2;
+      --success: #059669;
+      --success-bg: #ECFDF5;
+      --warning: #D97706;
+      --warning-bg: #FFFBEB;
+
+      /* 效果 */
       --shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.05);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-      --focus-ring: 0 0 0 3px rgba(232, 122, 62, 0.15);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --focus-ring: 0 0 0 3px var(--brand-soft);
+
+      /* 阶梯(4px 基线) */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
+
+      /* 圆角 */
+      --radius-sm: 6px; --radius-md: 8px; --radius-lg: 12px;
+
+      /* 字号(收敛为 5 阶) */
+      --text-xs: 12px; --text-sm: 14px; --text-base: 16px; --text-lg: 20px; --text-xl: 32px;
     }
 
     body {
-      font-family: 'Geist', 'Geist Sans', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Geist', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
@@ -48,7 +79,7 @@ const adminHtmlTemplate = `<!doctype html>
     .page {
       max-width: 980px;
       margin: 0 auto;
-      padding: 80px 24px;
+      padding: 48px 24px;
     }
 
     h1 {
@@ -86,7 +117,7 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     label {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 500;
       color: var(--text-secondary);
     }
@@ -96,9 +127,9 @@ const adminHtmlTemplate = `<!doctype html>
       width: 100%;
       padding: 10px 12px;
       font-family: inherit;
-      font-size: 15px;
+      font-size: 16px;
       color: var(--text);
-      background: white;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 6px;
       transition: all 0.2s ease;
@@ -108,7 +139,7 @@ const adminHtmlTemplate = `<!doctype html>
     input:focus,
     textarea:focus {
       outline: none;
-      border-color: var(--claude-orange);
+      border-color: var(--brand);
       box-shadow: var(--focus-ring);
     }
 
@@ -150,12 +181,20 @@ const adminHtmlTemplate = `<!doctype html>
       cursor: not-allowed;
     }
 
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+
     .btn-primary {
-      background: var(--claude-orange);
+      background: var(--brand);
     }
 
     .btn-primary:not(.action-btn):hover:not(:disabled) {
-      background: var(--claude-orange-hover);
+      background: var(--brand-hover);
       box-shadow: 0 4px 12px rgba(232, 122, 62, 0.25);
     }
 
@@ -167,9 +206,9 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     .btn-ghost:not(.action-btn):hover:not(:disabled) {
-      background: white;
-      border-color: var(--claude-orange);
-      color: var(--claude-orange);
+      background: var(--surface);
+      border-color: var(--brand);
+      color: var(--brand);
       box-shadow: 0 4px 12px rgba(232, 122, 62, 0.15);
     }
 
@@ -203,26 +242,26 @@ const adminHtmlTemplate = `<!doctype html>
       padding: 12px 14px;
       font-size: 14px;
       color: var(--text-secondary);
-      background: white;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 6px;
       margin-top: 16px;
     }
 
     .status.success {
-      color: #059669;
-      background: #ECFDF5;
-      border-color: #059669;
+      color: var(--success);
+      background: var(--success-bg);
+      border-color: var(--success);
     }
 
     .status.error {
       color: var(--danger);
-      background: #FEF2F2;
+      background: var(--danger-bg);
       border-color: var(--danger);
     }
 
     .table-wrapper {
-      background: white;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
@@ -263,14 +302,15 @@ const adminHtmlTemplate = `<!doctype html>
       font-family: inherit;
       font-size: 14px;
       color: var(--text);
-      background: var(--bg);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 6px;
     }
 
     .search-box:focus {
       outline: none;
-      border-color: var(--accent);
+      border-color: var(--brand);
+      box-shadow: var(--focus-ring);
     }
 
     table {
@@ -282,6 +322,7 @@ const adminHtmlTemplate = `<!doctype html>
     thead {
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
     }
 
     th {
@@ -308,7 +349,7 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     tbody tr:hover {
-      background-color: #F9FAFB;
+      background-color: var(--surface-2);
     }
 
     tbody tr.hidden {
@@ -316,7 +357,7 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     .cell-link {
-      color: var(--text);
+      color: var(--brand);
       text-decoration: none;
       font-weight: 500;
       display: block;
@@ -332,7 +373,7 @@ const adminHtmlTemplate = `<!doctype html>
     .cell-url {
       color: var(--text-secondary);
       font-family: 'SF Mono', Menlo, Monaco, monospace;
-      font-size: 13px;
+      font-size: 14px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -360,7 +401,7 @@ const adminHtmlTemplate = `<!doctype html>
       border: none;
       padding: 0;
       height: auto;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 500;
       color: var(--text-secondary);
       cursor: pointer;
@@ -394,7 +435,7 @@ const adminHtmlTemplate = `<!doctype html>
       width: 18px;
       height: 18px;
       cursor: pointer;
-      accent-color: var(--claude-orange);
+      accent-color: var(--brand);
     }
 
     .bulk-actions {
@@ -434,17 +475,17 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     .qr-content {
-      background: white;
+      background: var(--surface);
       border-radius: 12px;
       padding: 32px;
       max-width: 400px;
       width: 100%;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      box-shadow: var(--shadow-lg);
       text-align: center;
     }
 
     .qr-content h3 {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
       margin-bottom: 8px;
       color: var(--text);
@@ -521,7 +562,7 @@ const adminHtmlTemplate = `<!doctype html>
     .pagination-controls button {
       height: 32px;
       padding: 0 12px;
-      font-size: 13px;
+      font-size: 14px;
     }
 
     .pagination-controls button:disabled {
@@ -540,12 +581,12 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     .toast {
-      background: white;
+      background: var(--surface);
       color: var(--text);
       padding: 16px 20px;
       border-radius: 8px;
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      border-left: 4px solid var(--claude-orange);
+      border-left: 4px solid var(--brand);
       font-size: 14px;
       font-weight: 500;
       display: flex;
@@ -635,7 +676,7 @@ const adminHtmlTemplate = `<!doctype html>
         margin-bottom: 16px;
         border: 1px solid var(--border);
         border-radius: 8px;
-        background: white;
+        background: var(--surface);
         box-shadow: var(--shadow-sm);
       }
 
@@ -681,13 +722,56 @@ const adminHtmlTemplate = `<!doctype html>
         align-items: stretch;
       }
     }
+
+    /* 暗色模式 */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0A0A0A;
+        --surface: #171717;
+        --surface-2: #1F1F1F;
+        --text: #FAFAFA;
+        --text-secondary: #A3A3A3;
+        --text-tertiary: #737373;
+        --border: #262626;
+        --border-strong: #404040;
+        --accent: #262626;
+        --hover: #404040;
+        --brand: #E87A3E;
+        --brand-hover: #D0682E;
+        --brand-soft: rgba(232, 122, 62, 0.2);
+        --danger: #F87171;
+        --danger-hover: #FCA5A5;
+        --danger-bg: rgba(248, 113, 113, 0.12);
+        --success: #34D399;
+        --success-bg: rgba(52, 211, 153, 0.12);
+        --warning: #FBBF24;
+        --warning-bg: rgba(251, 191, 36, 0.12);
+        --shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+      }
+      /* QR 码扫描可靠性:保持白底 */
+      .qr-canvas {
+        background: #FFFFFF;
+      }
+      /* mark 高亮在暗色下调整 */
+      mark {
+        background-color: rgba(251, 191, 36, 0.3);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #404040;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #525252;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="page">
     <header style="display: flex; justify-content: space-between; align-items: flex-start;">
       <h1 data-i18n="title">URL Shortener</h1>
-      <button id="langToggleBtn" class="btn-ghost" style="height: 32px; padding: 0 12px; font-size: 13px;">中 / EN</button>
+      <button id="langToggleBtn" class="btn-ghost" style="height: 32px; padding: 0 12px; font-size: 14px;">中 / EN</button>
     </header>
 
     <section class="section">
