@@ -14,9 +14,6 @@ const adminHtmlTemplate = `<!doctype html>
   <meta name="referrer" content="no-referrer">
   <title>URL Shortener</title>
   <link rel="stylesheet" href="/geist.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -69,7 +66,7 @@ const adminHtmlTemplate = `<!doctype html>
     }
 
     body {
-      font-family: 'Geist', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
